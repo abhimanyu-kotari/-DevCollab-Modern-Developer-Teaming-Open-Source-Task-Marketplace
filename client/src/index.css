@@ -1,5 +1,4 @@
 @charset "UTF-8";
-
 :root {
   --bg-dark: #090d16;
   --bg-card: #111827;
@@ -9,11 +8,11 @@
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
-  --primary: #38bdf8;
+  --primary: #4f7d91;
   --primary-glow: rgba(56, 189, 248, 0.25);
-  --accent-gold: #f59e0b;
+  --accent-gold: #33929d;
   --accent-emerald: #10b981;
-  --accent-purple: #a855f7;
+  --accent-purple: #5c268f;
   --accent-rose: #f43f5e;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
