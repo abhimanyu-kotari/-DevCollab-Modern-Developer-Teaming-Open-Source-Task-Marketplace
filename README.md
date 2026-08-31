@@ -11,9 +11,9 @@
 ## 👥 Project Team (RV University • CS3301)
 | Name | USN | Core Responsibility |
 | :--- | :--- | :--- |
-| **Abhimanyu Kotari (Lead)** | [Your USN] | React UI Architecture, Client Routing & Component State |
-| **Team Member 2** | [Member 2 USN] | Express.js REST APIs, Middleware & Controller Logic |
-| **Team Member 3** | [Member 3 USN] | MongoDB Database, Mongoose Schemas & JWT/Bcrypt Auth |
+| **Abhimanyu Kotari (Lead)** | [1RUA24SCS0002] | React UI Architecture, Client Routing & Component State |
+| Aniketh | [1RUA24SCS0008 | Express.js REST APIs, Middleware & Controller Logic |
+| Dhanush V | 1RUA24SCS0031 | MongoDB Database, Mongoose Schemas & JWT/Bcrypt Auth |
 
 ---
 
