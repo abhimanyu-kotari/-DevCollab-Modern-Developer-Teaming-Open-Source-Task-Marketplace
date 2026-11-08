@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { authAPI, projectsAPI, applicationsAPI } from './services/api';
 
 const DEFAULT_PROJECTS = [
@@ -45,6 +45,7 @@ const DEFAULT_PROJECTS = [
 ];
 
 export default function App() {
+  // Synchronous session recovery from localStorage
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('devcollab_user');
@@ -100,25 +101,8 @@ export default function App() {
   const [isAppsModalOpen, setIsAppsModalOpen] = useState(false);
   const [myApplications, setMyApplications] = useState([]);
 
-  // Check saved session on mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem('devcollab_user');
-    const savedToken = localStorage.getItem('devcollab_token');
-    if (savedUser && savedToken) {
-      try {
-        setCurrentUser(JSON.parse(savedUser));
-        setCurrentScreen('main');
-      } catch (err) {
-        localStorage.removeItem('devcollab_user');
-        localStorage.removeItem('devcollab_token');
-      }
-    }
-    fetchProjects();
-  }, []);
-
-  // Fetch projects from backend REST API
-  const fetchProjects = async () => {
-    setProjectsLoading(true);
+  // Fetch projects from REST API
+  const fetchProjects = useCallback(async () => {
     try {
       const data = await projectsAPI.getAll(searchTerm, selectedCategory);
       if (data && data.projects) {
@@ -126,19 +110,49 @@ export default function App() {
         setApiConnected(true);
       }
     } catch (err) {
-      // Backend not running yet or offline: fallback gracefully
       setApiConnected(false);
-    } finally {
-      setProjectsLoading(false);
     }
-  };
+  }, [searchTerm, selectedCategory]);
 
-  // Trigger search whenever searchTerm or category changes
+  // Fetch submitted applications for current user
+  const fetchMyApplications = useCallback(async (userEmail) => {
+    if (!userEmail) return;
+    try {
+      const res = await applicationsAPI.getMyApplications(userEmail);
+      if (res && res.applications) {
+        setMyApplications(res.applications);
+      }
+    } catch (err) {
+      // Keep existing state
+    }
+  }, []);
+
+  // Sync entire app state
+  const syncAll = useCallback(async () => {
+    await fetchProjects();
+    if (currentUser?.email) {
+      await fetchMyApplications(currentUser.email);
+    }
+  }, [fetchProjects, fetchMyApplications, currentUser?.email]);
+
+  // Real-time tab sync and auto-polling
   useEffect(() => {
     if (currentScreen === 'main') {
-      fetchProjects();
+      syncAll();
+
+      // Sync immediately when window/tab is focused
+      const handleFocus = () => syncAll();
+      window.addEventListener('focus', handleFocus);
+
+      // Background heartbeat every 8 seconds to keep tabs synchronized
+      const timer = setInterval(syncAll, 8000);
+
+      return () => {
+        window.removeEventListener('focus', handleFocus);
+        clearInterval(timer);
+      };
     }
-  }, [searchTerm, selectedCategory, currentScreen]);
+  }, [currentScreen, syncAll]);
 
   // Auth Handler: Login or Register
   const handleAuthSubmit = async (e) => {
@@ -167,15 +181,16 @@ export default function App() {
         setCurrentUser(res.user);
         setApiConnected(true);
         setCurrentScreen('main');
+        fetchMyApplications(res.user.email);
       }
     } catch (err) {
-      // Fallback in-memory authentication if backend is offline
+      // Fallback in-memory authentication if backend is unreachable
       if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
         const fallbackName = name.trim() || email.split('@')[0];
         const formatted = fallbackName.charAt(0).toUpperCase() + fallbackName.slice(1);
         const fallbackUser = {
           name: formatted,
-          email: email,
+          email: email.toLowerCase(),
           role: role
         };
         localStorage.setItem('devcollab_user', JSON.stringify(fallbackUser));
@@ -210,10 +225,11 @@ export default function App() {
     setEmail('');
     setPassword('');
     setAuthError('');
+    setMyApplications([]);
     setCurrentScreen('login');
   };
 
-  // Post Project Handler
+  // Add / Post Project Handler
   const handleAddProject = async (e) => {
     e.preventDefault();
     if (!newTitle.trim() || !newDesc.trim() || !newRole.trim()) {
@@ -233,15 +249,14 @@ export default function App() {
     try {
       const res = await projectsAPI.create(payload);
       if (res && res.project) {
-        setProjects([res.project, ...projects]);
+        setProjects(prev => [res.project, ...prev]);
       }
     } catch (err) {
-      // Offline fallback
       const localProj = {
         _id: 'proj_' + Date.now(),
         ...payload
       };
-      setProjects([localProj, ...projects]);
+      setProjects(prev => [localProj, ...prev]);
     }
 
     setNewTitle('');
@@ -250,13 +265,42 @@ export default function App() {
     setNewSkills('');
     setIsPostModalOpen(false);
     alert('Project successfully posted to DevCollab marketplace!');
+    fetchProjects();
+  };
+
+  // Delete Project Handler
+  const handleDeleteProject = async (id, title) => {
+    if (!window.confirm(`Are you sure you want to delete "${title}"?`)) {
+      return;
+    }
+
+    try {
+      await projectsAPI.delete(id);
+    } catch (err) {
+      console.warn('Local delete fallback:', err.message);
+    }
+
+    setProjects(prev => prev.filter(p => (p._id || p.id) !== id));
+    alert(`Project "${title}" was deleted.`);
+  };
+
+  // Check if current user already applied to this project
+  const isAlreadyApplied = (projectId) => {
+    return myApplications.some(app =>
+      String(app.projectId || app.project) === String(projectId)
+    );
   };
 
   // Open Apply Modal
   const openApply = (project) => {
+    const projId = project._id || project.id;
+    if (isAlreadyApplied(projId)) {
+      alert('You have already submitted an application for this project!');
+      return;
+    }
     setSelectedProject(project);
     setApplyRole(project.openRole);
-    setApplyPitch(`Hi ${project.ownerName}, I have strong experience in ${project.skillsRequired?.slice(0, 2).join(' and ') || 'full stack development'} and would love to join your project!`);
+    setApplyPitch(`Hi ${project.ownerName}, I have strong hands-on experience in ${project.skillsRequired?.slice(0, 2).join(' and ') || 'full stack development'} and would love to join your project!`);
     setIsApplyModalOpen(true);
   };
 
@@ -268,46 +312,52 @@ export default function App() {
       return;
     }
 
+    const projId = selectedProject._id || selectedProject.id;
     const appData = {
-      projectId: selectedProject._id,
+      projectId: projId,
       projectTitle: selectedProject.title,
       roleApplied: applyRole,
       pitch: applyPitch.trim(),
       applicantName: currentUser?.name || "Student Applicant",
-      applicantEmail: currentUser?.email || "student@rvu.edu.in"
+      applicantEmail: (currentUser?.email || "student@rvu.edu.in").toLowerCase()
     };
 
     try {
       await applicationsAPI.submit(appData);
     } catch (err) {
-      // Local fallback
+      if (err.message && err.message.includes('already')) {
+        alert(err.message);
+        setIsApplyModalOpen(false);
+        return;
+      }
     }
 
-    setMyApplications([
-      { ...appData, _id: 'app_' + Date.now(), status: 'Pending', createdAt: new Date().toISOString() },
-      ...myApplications
-    ]);
+    const newAppRecord = {
+      ...appData,
+      _id: 'app_' + Date.now(),
+      status: 'Pending',
+      createdAt: new Date().toISOString()
+    };
 
+    setMyApplications(prev => [newAppRecord, ...prev]);
     setIsApplyModalOpen(false);
     alert(`Application submitted for "${applyRole}" on "${selectedProject.title}"!`);
+
+    // Sync from server
+    if (currentUser?.email) {
+      fetchMyApplications(currentUser.email);
+    }
   };
 
-  // Fetch My Applications
+  // Open My Applications Modal
   const openApplicationsModal = async () => {
     setIsAppsModalOpen(true);
     if (currentUser?.email) {
-      try {
-        const res = await applicationsAPI.getMyApplications(currentUser.email);
-        if (res && res.applications && res.applications.length > 0) {
-          setMyApplications(res.applications);
-        }
-      } catch (err) {
-        // Keeps local state
-      }
+      fetchMyApplications(currentUser.email);
     }
   };
 
-  // Filter projects in memory for real-time responsiveness
+  // Real-time client-side filter
   const filteredProjects = projects.filter((p) => {
     const matchesCategory = selectedCategory === 'All' || p.category?.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch =
@@ -318,14 +368,17 @@ export default function App() {
   });
 
   // =========================================================================
-  // SCREEN 1: AUTHENTICATION SCREEN (Login & Sign Up with Validation)
+  // SCREEN 1: AUTHENTICATION SCREEN (Login & Sign Up)
   // =========================================================================
   if (currentScreen === 'login') {
     return (
       <div className="login-container">
         <div className="login-card">
-          <div className="brand-badge">DevCollab Platform</div>
-          <h2><span>Dev</span>Collab</h2>
+          <div className="brand-badge">DevCollab Platform • Phase 2</div>
+          <div className="brand-logo-title">
+            <span className="logo-icon">⚡</span>
+            <h2><span>Dev</span>Collab</h2>
+          </div>
           <p className="subtitle">Developer Teaming & Open Task Marketplace</p>
 
           <div className="auth-tab-switch">
@@ -334,14 +387,14 @@ export default function App() {
               className={`auth-tab-btn ${authMode === 'login' ? 'active' : ''}`}
               onClick={() => { setAuthMode('login'); setAuthError(''); }}
             >
-              Student Login
+              Sign In
             </button>
             <button
               type="button"
               className={`auth-tab-btn ${authMode === 'signup' ? 'active' : ''}`}
               onClick={() => { setAuthMode('signup'); setAuthError(''); }}
             >
-              Sign Up
+              Create Account
             </button>
           </div>
 
@@ -376,7 +429,7 @@ export default function App() {
               <label>Password *</label>
               <input
                 type="password"
-                placeholder="Enter password (min 6 chars)"
+                placeholder="Enter password (min 6 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -385,11 +438,11 @@ export default function App() {
             </div>
 
             <div className="form-group">
-              <label>Primary Skill Role</label>
+              <label>Primary Role</label>
               <select value={role} onChange={(e) => setRole(e.target.value)}>
                 <option value="Frontend Developer">Frontend Developer (React / UI)</option>
                 <option value="Backend Developer">Backend Developer (Node / Express)</option>
-                <option value="Full Stack Developer">Full Stack Developer (MERN)</option>
+                <option value="Full Stack Developer">Full Stack Developer (MERN Stack)</option>
                 <option value="UI/UX Designer">UI/UX Designer (Figma / CSS)</option>
                 <option value="Student Developer">Student Developer</option>
               </select>
@@ -408,18 +461,18 @@ export default function App() {
             )}
 
             <button type="submit" className="btn btn-primary btn-block" disabled={authLoading}>
-              {authLoading ? 'Verifying...' : (authMode === 'login' ? 'Login with JWT' : 'Create Account')}
+              {authLoading ? 'Verifying...' : (authMode === 'login' ? 'Sign In with JWT' : 'Register Account')}
             </button>
           </form>
 
           <div className="guest-action">
             <button type="button" className="btn-link" onClick={handleGuest}>
-              Skip Login & Explore as Guest
+              Skip Login & Explore as Guest →
             </button>
           </div>
 
           <div className="login-footer-info">
-            <span>Module 4: Bcrypt Password Hashing + JWT Authorization</span>
+            <span>Module 4 Security: Bcrypt Password Hashing + Signed JWT Tokens</span>
           </div>
         </div>
       </div>
@@ -435,32 +488,38 @@ export default function App() {
       <header className="navbar">
         <div className="nav-container">
           <div className="nav-brand">
+            <span className="brand-logo-emoji">⚡</span>
             <h2><span>Dev</span>Collab</h2>
-            <span className="badge-phase">Phase-2 Full Stack</span>
+            <span className="badge-phase">Phase-2 Live</span>
           </div>
 
           <div className="nav-right">
-            <div className="api-status-pill" title={apiConnected ? "Connected to Express Backend" : "Operating with local fallback"}>
+            <div className="api-status-pill" title={apiConnected ? "Connected to Express & MongoDB" : "Operating with local fallback"}>
               <span className={`status-dot ${apiConnected ? 'online' : 'offline'}`}></span>
-              {apiConnected ? 'API Live (Node/Express)' : 'In-Memory State'}
+              {apiConnected ? 'API Live (Node + MongoDB)' : 'In-Memory State'}
             </div>
 
             {currentUser && (
-              <div className="user-badge">
-                <span className="user-name">{currentUser.name}</span>
-                <span className="user-role-tag">{currentUser.role || 'Developer'}</span>
+              <div className="user-profile-badge">
+                <div className="avatar-circle">
+                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="user-badge-info">
+                  <span className="user-name">{currentUser.name}</span>
+                  <span className="user-role-tag">{currentUser.role || 'Developer'}</span>
+                </div>
               </div>
             )}
 
             <button className="btn btn-secondary btn-sm" onClick={openApplicationsModal}>
-              My Applications ({myApplications.length})
+              My Applications <span className="counter-pill">{myApplications.length}</span>
             </button>
 
             <button className="btn btn-primary btn-sm" onClick={() => setIsPostModalOpen(true)}>
               + Post Project
             </button>
 
-            <button className="btn btn-outline btn-sm" onClick={handleLogout}>
+            <button className="btn btn-outline btn-sm logout-btn" onClick={handleLogout}>
               Logout
             </button>
           </div>
@@ -471,13 +530,16 @@ export default function App() {
       <main className="content-container">
         {/* Banner Section */}
         <section className="dashboard-hero">
-          <h1>Find Teammates & Open-Source Tasks</h1>
-          <p>Collaborate on real-world MERN stack projects, split development roles, and build your engineering portfolio.</p>
+          <div className="hero-content">
+            <h1>Find Teammates & Open-Source Tasks</h1>
+            <p>Collaborate on real-world full-stack MERN projects, claim open roles, and build your engineering team portfolio.</p>
+          </div>
         </section>
 
         {/* Search & Category Filter Controls */}
         <section className="filter-panel">
           <div className="search-bar">
+            <span className="search-icon">🔍</span>
             <input
               type="text"
               placeholder="Search by project title, keyword, or tech skill (e.g. React, MongoDB)..."
@@ -509,44 +571,73 @@ export default function App() {
             <div className="empty-state">Loading marketplace projects...</div>
           ) : filteredProjects.length === 0 ? (
             <div className="empty-state">
+              <div className="empty-state-icon">📂</div>
               <h3>No matching projects found</h3>
-              <p>Try clearing your search filters or click "+ Post Project" to publish a new task!</p>
+              <p>Try clearing your search query or click "+ Post Project" to publish a new task!</p>
             </div>
           ) : (
-            filteredProjects.map((p) => (
-              <article key={p._id || p.id} className="project-card">
-                <div className="card-header">
-                  <span className="category-tag">{p.category || 'General'}</span>
-                  <span className="status-indicator">● {p.status || 'Open'}</span>
-                </div>
+            filteredProjects.map((p) => {
+              const projId = p._id || p.id;
+              const applied = isAlreadyApplied(projId);
 
-                <h3 className="project-title">{p.title}</h3>
-                <p className="project-desc">{p.description}</p>
-
-                <div className="tech-section">
-                  <span className="section-label">Required Skills:</span>
-                  <div className="tech-tags">
-                    {p.skillsRequired && p.skillsRequired.map((skill, i) => (
-                      <span key={i} className="tech-pill">{skill}</span>
-                    ))}
+              return (
+                <article key={projId} className="project-card">
+                  <div className="card-header">
+                    <span className="category-tag">{p.category || 'General'}</span>
+                    <span className="status-indicator">● {p.status || 'Open'}</span>
                   </div>
-                </div>
 
-                <div className="role-callout">
-                  <strong>Open Role:</strong> {p.openRole}
-                </div>
+                  <h3 className="project-title">{p.title}</h3>
+                  <p className="project-desc">{p.description}</p>
 
-                <div className="card-footer">
-                  <div className="owner-info">
-                    <span className="owner-label">Posted by</span>
-                    <span className="owner-name">{p.ownerName || 'Student'}</span>
+                  <div className="tech-section">
+                    <span className="section-label">Required Skills:</span>
+                    <div className="tech-tags">
+                      {p.skillsRequired && p.skillsRequired.map((skill, i) => (
+                        <span key={i} className="tech-pill">{skill}</span>
+                      ))}
+                    </div>
                   </div>
-                  <button className="btn btn-primary btn-sm" onClick={() => openApply(p)}>
-                    Apply Now
-                  </button>
-                </div>
-              </article>
-            ))
+
+                  <div className="role-callout">
+                    <span className="role-callout-icon">🎯</span>
+                    <div>
+                      <strong>Open Role:</strong> {p.openRole}
+                    </div>
+                  </div>
+
+                  <div className="card-footer">
+                    <div className="owner-info">
+                      <span className="owner-label">Posted by</span>
+                      <span className="owner-name">{p.ownerName || 'Student'}</span>
+                    </div>
+
+                    <div className="card-actions-group">
+                      {/* Delete Button */}
+                      <button
+                        type="button"
+                        className="btn btn-delete-sm"
+                        title="Delete project"
+                        onClick={() => handleDeleteProject(projId, p.title)}
+                      >
+                        🗑️ Delete
+                      </button>
+
+                      {/* Apply Button */}
+                      {applied ? (
+                        <button className="btn btn-applied" disabled title="Already applied">
+                          Applied ✓
+                        </button>
+                      ) : (
+                        <button className="btn btn-primary btn-sm" onClick={() => openApply(p)}>
+                          Apply Now
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })
           )}
         </section>
       </main>
@@ -565,7 +656,7 @@ export default function App() {
                 <label>Project Title *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Smart Campus Navigation"
+                  placeholder="e.g. Smart Campus Navigation System"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   required
@@ -638,12 +729,12 @@ export default function App() {
 
             <form onSubmit={submitApplication}>
               <div className="apply-project-summary">
-                <p><strong>Lead:</strong> {selectedProject.ownerName}</p>
+                <p><strong>Project Lead:</strong> {selectedProject.ownerName}</p>
                 <p><strong>Applying as:</strong> {applyRole}</p>
               </div>
 
               <div className="form-group">
-                <label>Select Role</label>
+                <label>Select Desired Role *</label>
                 <input
                   type="text"
                   value={applyRole}
@@ -656,7 +747,7 @@ export default function App() {
                 <label>Why are you a good fit? (Pitch) *</label>
                 <textarea
                   rows="4"
-                  placeholder="Describe your tech stack experience, GitHub projects, and availability..."
+                  placeholder="Describe your tech stack experience, past projects, and weekly availability..."
                   value={applyPitch}
                   onChange={(e) => setApplyPitch(e.target.value)}
                   required
@@ -687,17 +778,21 @@ export default function App() {
 
             <div className="apps-list">
               {myApplications.length === 0 ? (
-                <p className="empty-text">You haven't submitted any project applications yet. Click "Apply Now" on any card to connect with leads!</p>
+                <div className="empty-apps-box">
+                  <span className="empty-box-icon">📬</span>
+                  <p>You haven't submitted any applications yet.</p>
+                  <p className="subtext">Browse open projects on the marketplace and click "Apply Now" to join a team!</p>
+                </div>
               ) : (
                 myApplications.map((app, idx) => (
                   <div key={app._id || idx} className="app-card-item">
                     <div className="app-item-top">
-                      <strong>{app.projectTitle || 'Project Application'}</strong>
+                      <strong>{app.projectTitle || 'DevCollab Project'}</strong>
                       <span className={`status-tag ${app.status?.toLowerCase() || 'pending'}`}>
-                        {app.status || 'Pending'}
+                        ● {app.status || 'Pending'}
                       </span>
                     </div>
-                    <div className="app-role-line">Role: <span>{app.roleApplied}</span></div>
+                    <div className="app-role-line">Applied for: <span>{app.roleApplied}</span></div>
                     <p className="app-pitch-text">"{app.pitch}"</p>
                   </div>
                 ))
@@ -716,7 +811,7 @@ export default function App() {
       {/* Footer */}
       <footer className="footer">
         <p>DevCollab Platform • RV University CS3301 Full Stack Development CIE-2 (Phase 2)</p>
-        <p className="footer-sub">MERN Stack Architecture: MongoDB + Express.js + React.js + Node.js</p>
+        <p className="footer-sub">MERN Stack Architecture: MongoDB Atlas + Express.js + React.js + Node.js</p>
       </footer>
     </div>
   );
