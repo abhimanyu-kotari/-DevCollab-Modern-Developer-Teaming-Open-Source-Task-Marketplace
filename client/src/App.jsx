@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { authAPI, projectsAPI, applicationsAPI } from './services/api';
 
+const CATEGORY_COVERS = {
+  'Full Stack': 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
+  'Web Development': 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
+  'MERN Stack': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+  'AI / ML': 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80'
+};
+
 const DEFAULT_PROJECTS = [
   {
     _id: 'proj_1',
@@ -10,7 +17,8 @@ const DEFAULT_PROJECTS = [
     skillsRequired: ["React", "Node.js", "MongoDB", "Python"],
     openRole: "Frontend Developer",
     ownerName: "Abhimanyu Kotari",
-    status: "Open"
+    status: "Open",
+    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80"
   },
   {
     _id: 'proj_2',
@@ -20,7 +28,8 @@ const DEFAULT_PROJECTS = [
     skillsRequired: ["React", "Express.js", "CSS", "PostgreSQL"],
     openRole: "Backend Developer",
     ownerName: "Dhanush V",
-    status: "Open"
+    status: "Open",
+    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80"
   },
   {
     _id: 'proj_3',
@@ -30,7 +39,8 @@ const DEFAULT_PROJECTS = [
     skillsRequired: ["JavaScript", "React", "Node.js", "Chart.js"],
     openRole: "UI/UX Designer",
     ownerName: "Aniketh",
-    status: "Open"
+    status: "Open",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80"
   },
   {
     _id: 'proj_4',
@@ -40,7 +50,8 @@ const DEFAULT_PROJECTS = [
     skillsRequired: ["Python", "OpenCV", "PyTorch", "ROS"],
     openRole: "Computer Vision Engineer",
     ownerName: "Abhimanyu Kotari",
-    status: "Open"
+    status: "Open",
+    image: "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80"
   }
 ];
 
@@ -265,7 +276,8 @@ export default function App() {
       description: newDesc.trim(),
       openRole: newRole.trim(),
       skillsRequired: newSkills ? newSkills.split(',').map(s => s.trim()) : [],
-      ownerName: currentUser?.name || "Student Developer"
+      ownerName: currentUser?.name || "Student Developer",
+      image: CATEGORY_COVERS[newCategory] || CATEGORY_COVERS['Full Stack']
     };
 
     try {
@@ -548,35 +560,19 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right: + Post Project, My Applications, Profile (Name), Logout */}
+          {/* Right: + Post Project & User Profile (All user actions consolidated) */}
           <div className="nav-right">
             {/* + Post Project Button */}
             <button className="btn btn-emerald-primary btn-sm" onClick={() => setIsPostModalOpen(true)}>
               <span className="btn-icon">⚡</span> + Post Project
             </button>
 
-            {/* My Applications Button */}
-            <button
-              className="btn btn-nav-secondary btn-sm"
-              onClick={() => {
-                setProfileActiveTab('sent');
-                setIsProfileModalOpen(true);
-              }}
-            >
-              <span className="btn-icon">📋</span>
-              My Applications
-              <span className="counter-pill">{myApplications.length}</span>
-            </button>
-
-            {/* User Profile Button with Name (Click to open Team Management Hub) */}
+            {/* User Profile Button with Name (Opens Profile, Applications & Logout) */}
             {currentUser && (
               <button
                 className="user-profile-button"
-                onClick={() => {
-                  setProfileActiveTab('received');
-                  setIsProfileModalOpen(true);
-                }}
-                title="Open Profile & Candidate Applications"
+                onClick={() => setIsProfileModalOpen(true)}
+                title="Open Profile, Applications & Logout"
               >
                 <div className="avatar-initial">
                   {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
@@ -590,52 +586,82 @@ export default function App() {
                     {receivedApplications.length}
                   </span>
                 )}
+                <span className="profile-dropdown-arrow">▾</span>
               </button>
             )}
-
-            {/* Logout Button */}
-            <button className="btn btn-ghost-logout btn-sm" onClick={handleLogout} title="Log out of session">
-              Logout
-            </button>
           </div>
         </div>
       </header>
 
       {/* Main Container */}
       <main className="content-container">
-        {/* Hero Section */}
+        {/* Hero Section with Developer Visual Showcase */}
         <section className="dashboard-hero">
-          <div className="hero-announcement">
-            <span className="announcement-sparkle">🚀</span>
-            <span>Developer Teaming & Open Task Marketplace</span>
-            <span className="announcement-tag">MERN Stack</span>
-          </div>
+          <div className="hero-split-grid">
+            <div className="hero-content-col">
+              <div className="hero-announcement">
+                <span className="announcement-sparkle">🚀</span>
+                <span>Developer Teaming & Open Task Marketplace</span>
+                <span className="announcement-tag">MERN Stack</span>
+              </div>
 
-          <h1 className="hero-heading">
-            Find Teammates. Build Projects. <br />
-            <span className="hero-gradient-text">Ship Real Code.</span>
-          </h1>
+              <h1 className="hero-heading">
+                Find Teammates. Build Projects. <br />
+                <span className="hero-gradient-text">Ship Real Code.</span>
+              </h1>
 
-          <p className="hero-subtext">
-            Connect with peer developers, claim open roles, and form agile engineering teams backed by real-time MongoDB tracking.
-          </p>
+              <p className="hero-subtext">
+                Connect with peer developers, claim open roles, and form agile engineering teams backed by real-time MongoDB Atlas tracking.
+              </p>
 
-          <div className="hero-stats-row">
-            <div className="stat-card">
-              <span className="stat-number">{projects.length}+</span>
-              <span className="stat-label">Active Projects</span>
+              <div className="hero-stats-row">
+                <div className="stat-card">
+                  <span className="stat-number">{projects.length}+</span>
+                  <span className="stat-label">Active Projects</span>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-number">100%</span>
+                  <span className="stat-label">REST API CRUD</span>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-number">JWT</span>
+                  <span className="stat-label">Bcrypt Security</span>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-number">Atlas</span>
+                  <span className="stat-label">Cloud Database</span>
+                </div>
+              </div>
             </div>
-            <div className="stat-card">
-              <span className="stat-number">100%</span>
-              <span className="stat-label">REST API CRUD</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-number">JWT</span>
-              <span className="stat-label">Bcrypt Security</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-number">Atlas</span>
-              <span className="stat-label">Cloud Database</span>
+
+            <div className="hero-visual-col">
+              <div className="hero-ide-window">
+                <div className="ide-window-header">
+                  <div className="ide-window-dots">
+                    <span className="dot dot-red"></span>
+                    <span className="dot dot-yellow"></span>
+                    <span className="dot dot-green"></span>
+                  </div>
+                  <span className="ide-window-title">devcollab-workspace // sprint-terminal</span>
+                  <span className="ide-window-status">● Live Sync</span>
+                </div>
+                <div className="ide-window-body">
+                  <img
+                    src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80"
+                    alt="Developer Teaming Coding Workspace"
+                    className="ide-banner-img"
+                  />
+                  <div className="ide-floating-overlay">
+                    <div className="ide-glass-chip">
+                      <span className="chip-spark">⚡</span>
+                      <div>
+                        <strong>Agile Teaming In Progress</strong>
+                        <span>4+ Verified Projects Active</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -692,66 +718,77 @@ export default function App() {
             filteredProjects.map((p) => {
               const projId = p._id || p.id;
               const applied = isAlreadyApplied(projId);
+              const coverImage = p.image || CATEGORY_COVERS[p.category] || CATEGORY_COVERS['Full Stack'];
 
               return (
                 <article key={projId} className="project-card">
-                  <div className="card-header">
-                    <span className="category-tag">{p.category || 'General'}</span>
-                    <span className="status-indicator">
+                  {/* Project Cover Image */}
+                  <div className="project-card-image-wrap">
+                    <img
+                      src={coverImage}
+                      alt={p.title}
+                      className="project-card-image"
+                      loading="lazy"
+                    />
+                    <div className="project-image-gradient"></div>
+                    <span className="category-tag-floating">{p.category || 'General'}</span>
+                    <span className="status-indicator-floating">
                       <span className="status-dot-pulse"></span>
                       {p.status || 'Open'}
                     </span>
                   </div>
 
-                  <h3 className="project-title">{p.title}</h3>
-                  <p className="project-desc">{p.description}</p>
+                  <div className="project-card-body">
+                    <h3 className="project-title">{p.title}</h3>
+                    <p className="project-desc">{p.description}</p>
 
-                  <div className="tech-section">
-                    <span className="section-label">Required Tech Stack:</span>
-                    <div className="tech-tags">
-                      {p.skillsRequired && p.skillsRequired.map((skill, i) => (
-                        <span key={i} className="tech-pill">#{skill}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="role-callout">
-                    <span className="role-callout-icon">🎯</span>
-                    <div className="role-callout-text">
-                      <span className="role-callout-label">Open Position</span>
-                      <strong>{p.openRole}</strong>
-                    </div>
-                  </div>
-
-                  <div className="card-footer">
-                    <div className="owner-info">
-                      <span className="owner-label">Project Lead</span>
-                      <span className="owner-name">{p.ownerName || 'Student'}</span>
+                    <div className="tech-section">
+                      <span className="section-label">Required Tech Stack:</span>
+                      <div className="tech-tags">
+                        {p.skillsRequired && p.skillsRequired.map((skill, i) => (
+                          <span key={i} className="tech-pill">#{skill}</span>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="card-actions-group">
-                      {/* Delete Button (Owner or Lead Admin) */}
-                      {canDeleteProject(p) && (
-                        <button
-                          type="button"
-                          className="btn btn-delete-sm"
-                          title="Delete this project post"
-                          onClick={() => handleDeleteProject(projId, p.title)}
-                        >
-                          🗑️ Delete
-                        </button>
-                      )}
+                    <div className="role-callout">
+                      <span className="role-callout-icon">🎯</span>
+                      <div className="role-callout-text">
+                        <span className="role-callout-label">Open Position</span>
+                        <strong>{p.openRole}</strong>
+                      </div>
+                    </div>
 
-                      {/* Apply Button */}
-                      {applied ? (
-                        <button className="btn btn-applied" disabled title="Already applied">
-                          Applied ✓
-                        </button>
-                      ) : (
-                        <button className="btn btn-emerald-primary btn-sm" onClick={() => openApply(p)}>
-                          Apply Now →
-                        </button>
-                      )}
+                    <div className="card-footer">
+                      <div className="owner-info">
+                        <span className="owner-label">Project Lead</span>
+                        <span className="owner-name">{p.ownerName || 'Student'}</span>
+                      </div>
+
+                      <div className="card-actions-group">
+                        {/* Delete Button (Only Owner) */}
+                        {canDeleteProject(p) && (
+                          <button
+                            type="button"
+                            className="btn btn-delete-sm"
+                            title="Delete this project post"
+                            onClick={() => handleDeleteProject(projId, p.title)}
+                          >
+                            🗑️ Delete
+                          </button>
+                        )}
+
+                        {/* Apply Button */}
+                        {applied ? (
+                          <button className="btn btn-applied" disabled title="Already applied">
+                            Applied ✓
+                          </button>
+                        ) : (
+                          <button className="btn btn-emerald-primary btn-sm" onClick={() => openApply(p)}>
+                            Apply Now →
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </article>
@@ -761,21 +798,55 @@ export default function App() {
         </section>
       </main>
 
-      {/* DEVELOPER PROFILE & TEAM MANAGEMENT HUB MODAL */}
+      {/* DEVELOPER PROFILE DRAWER (Slide-over panel containing Inquiries, Applications, Projects, and Logout) */}
       {isProfileModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsProfileModalOpen(false)}>
-          <div className="modal-content profile-hub-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-title-wrap">
+        <div className="profile-drawer-backdrop" onClick={() => setIsProfileModalOpen(false)}>
+          <div className="profile-drawer" onClick={(e) => e.stopPropagation()}>
+            {/* Drawer Header */}
+            <div className="profile-drawer-header">
+              <div className="profile-drawer-title">
+                <span className="drawer-icon">⚡</span>
+                <h3>Developer Profile</h3>
+              </div>
+              <button className="modal-close" onClick={() => setIsProfileModalOpen(false)}>✕</button>
+            </div>
+
+            {/* User Identity Card */}
+            <div className="profile-identity-card">
+              <div className="profile-avatar-wrap">
                 <div className="avatar-initial-large">
                   {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                 </div>
-                <div>
-                  <h3>{currentUser?.name || 'Developer Profile'}</h3>
-                  <span className="profile-role-sub">{currentUser?.role || 'Developer'} • {currentUser?.email}</span>
+                <span className="avatar-online-dot"></span>
+              </div>
+              <h4 className="profile-name">{currentUser?.name || 'Developer'}</h4>
+              <span className="profile-badge">{currentUser?.role || 'Developer'}</span>
+              <p className="profile-email">{currentUser?.email}</p>
+
+              {/* Overview Counters */}
+              <div className="profile-stats-row">
+                <div
+                  className={`profile-stat-box ${profileActiveTab === 'received' ? 'active' : ''}`}
+                  onClick={() => setProfileActiveTab('received')}
+                >
+                  <span className="stat-count">{receivedApplications.length}</span>
+                  <span className="stat-name">Inquiries</span>
+                </div>
+                <div
+                  className={`profile-stat-box ${profileActiveTab === 'sent' ? 'active' : ''}`}
+                  onClick={() => setProfileActiveTab('sent')}
+                >
+                  <span className="stat-count">{myApplications.length}</span>
+                  <span className="stat-name">Applications</span>
+                </div>
+                <div
+                  className={`profile-stat-box ${profileActiveTab === 'projects' ? 'active' : ''}`}
+                  onClick={() => setProfileActiveTab('projects')}
+                >
+                  <span className="stat-count">{myOwnProjects.length}</span>
+                  <span className="stat-name">Projects</span>
                 </div>
               </div>
-              <button className="modal-close" onClick={() => setIsProfileModalOpen(false)}>✕</button>
             </div>
 
             {/* Profile Navigation Tabs */}
@@ -785,166 +856,180 @@ export default function App() {
                 className={`profile-tab-item ${profileActiveTab === 'received' ? 'active' : ''}`}
                 onClick={() => setProfileActiveTab('received')}
               >
-                📥 Candidate Inquiries ({receivedApplications.length})
+                📥 Inquiries ({receivedApplications.length})
               </button>
               <button
                 type="button"
                 className={`profile-tab-item ${profileActiveTab === 'sent' ? 'active' : ''}`}
                 onClick={() => setProfileActiveTab('sent')}
               >
-                📤 My Sent Applications ({myApplications.length})
+                📤 Applications ({myApplications.length})
               </button>
               <button
                 type="button"
                 className={`profile-tab-item ${profileActiveTab === 'projects' ? 'active' : ''}`}
                 onClick={() => setProfileActiveTab('projects')}
               >
-                📁 My Posted Projects ({myOwnProjects.length})
+                📁 Projects ({myOwnProjects.length})
               </button>
             </div>
 
-            {/* TAB 1: RECEIVED CANDIDATE APPLICATIONS */}
-            {profileActiveTab === 'received' && (
-              <div className="profile-tab-content">
-                <p className="tab-explanation-text">
-                  Candidates who submitted applications to join projects you lead:
-                </p>
-
-                {receivedApplications.length === 0 ? (
-                  <div className="empty-apps-box">
-                    <span className="empty-box-icon">📬</span>
-                    <p>No candidates have applied to your projects yet.</p>
-                    <p className="subtext">When other developers apply to your projects, their pitch and details will appear here for you to accept or decline!</p>
+            {/* Tab Body */}
+            <div className="profile-drawer-body">
+              {/* TAB 1: RECEIVED CANDIDATE APPLICATIONS */}
+              {profileActiveTab === 'received' && (
+                <div className="profile-tab-content">
+                  <div className="tab-section-intro">
+                    <span className="section-title">Candidate Inquiries</span>
+                    <span className="section-hint">Applicants wanting to join your projects</span>
                   </div>
-                ) : (
-                  <div className="apps-list">
-                    {receivedApplications.map((app, idx) => (
-                      <div key={app._id || idx} className="app-card-item candidate-card">
-                        <div className="app-item-top">
-                          <div>
-                            <strong>{app.applicantName}</strong>
-                            <span className="candidate-email"> ({app.applicantEmail})</span>
-                          </div>
-                          <span className={`status-tag ${app.status?.toLowerCase() || 'pending'}`}>
-                            ● {app.status || 'Pending'}
-                          </span>
-                        </div>
 
-                        <div className="app-role-line">
-                          Applied for: <strong>{app.roleApplied}</strong> on <em>"{app.projectTitle}"</em>
-                        </div>
-
-                        <p className="app-pitch-text">"{app.pitch}"</p>
-
-                        <div className="candidate-action-buttons">
-                          <button
-                            type="button"
-                            className="btn btn-accept-sm"
-                            disabled={app.status === 'Accepted'}
-                            onClick={() => handleUpdateStatus(app._id || app.id, 'Accepted')}
-                          >
-                            ✓ Accept Candidate
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-reject-sm"
-                            disabled={app.status === 'Rejected'}
-                            onClick={() => handleUpdateStatus(app._id || app.id, 'Rejected')}
-                          >
-                            ✕ Decline
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* TAB 2: MY SENT APPLICATIONS */}
-            {profileActiveTab === 'sent' && (
-              <div className="profile-tab-content">
-                <p className="tab-explanation-text">
-                  Applications you submitted to join other development teams:
-                </p>
-
-                {myApplications.length === 0 ? (
-                  <div className="empty-apps-box">
-                    <span className="empty-box-icon">📤</span>
-                    <p>You haven't submitted any applications yet.</p>
-                    <p className="subtext">Browse open projects on the marketplace and click "Apply Now" to join a team!</p>
-                  </div>
-                ) : (
-                  <div className="apps-list">
-                    {myApplications.map((app, idx) => (
-                      <div key={app._id || idx} className="app-card-item">
-                        <div className="app-item-top">
-                          <strong>{app.projectTitle || 'DevCollab Project'}</strong>
-                          <div className="app-status-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {receivedApplications.length === 0 ? (
+                    <div className="empty-apps-box">
+                      <span className="empty-box-icon">📬</span>
+                      <p>No candidate inquiries yet.</p>
+                      <p className="subtext">When developers apply to projects you lead, their requests appear here for your review.</p>
+                    </div>
+                  ) : (
+                    <div className="apps-list">
+                      {receivedApplications.map((app, idx) => (
+                        <div key={app._id || idx} className="app-card-item candidate-card">
+                          <div className="app-item-top">
+                            <div>
+                              <strong>{app.applicantName}</strong>
+                              <span className="candidate-email"> ({app.applicantEmail})</span>
+                            </div>
                             <span className={`status-tag ${app.status?.toLowerCase() || 'pending'}`}>
                               ● {app.status || 'Pending'}
                             </span>
+                          </div>
+
+                          <div className="app-role-line">
+                            Applied for: <strong>{app.roleApplied}</strong> on <em>"{app.projectTitle}"</em>
+                          </div>
+
+                          <p className="app-pitch-text">"{app.pitch}"</p>
+
+                          <div className="candidate-action-buttons">
                             <button
                               type="button"
-                              className="btn btn-delete-sm"
-                              title="Withdraw application"
-                              onClick={() => handleWithdrawApplication(app._id || idx)}
+                              className="btn btn-accept-sm"
+                              disabled={app.status === 'Accepted'}
+                              onClick={() => handleUpdateStatus(app._id || app.id, 'Accepted')}
                             >
-                              Withdraw ✕
+                              ✓ Accept Candidate
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-reject-sm"
+                              disabled={app.status === 'Rejected'}
+                              onClick={() => handleUpdateStatus(app._id || app.id, 'Rejected')}
+                            >
+                              ✕ Decline
                             </button>
                           </div>
                         </div>
-                        <div className="app-role-line">Role Applied: <span>{app.roleApplied}</span></div>
-                        <p className="app-pitch-text">"{app.pitch}"</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {/* TAB 3: MY POSTED PROJECTS */}
-            {profileActiveTab === 'projects' && (
-              <div className="profile-tab-content">
-                <p className="tab-explanation-text">
-                  Projects published under your ownership on the marketplace:
-                </p>
-
-                {myOwnProjects.length === 0 ? (
-                  <div className="empty-apps-box">
-                    <span className="empty-box-icon">📁</span>
-                    <p>You haven't posted any projects yet.</p>
-                    <p className="subtext">Click the "+ Post Project" button in the top navigation bar to create your first task!</p>
+              {/* TAB 2: MY SENT APPLICATIONS */}
+              {profileActiveTab === 'sent' && (
+                <div className="profile-tab-content">
+                  <div className="tab-section-intro">
+                    <span className="section-title">My Sent Applications</span>
+                    <span className="section-hint">Teams and roles you applied to join</span>
                   </div>
-                ) : (
-                  <div className="apps-list">
-                    {myOwnProjects.map((p) => {
-                      const projId = p._id || p.id;
-                      return (
-                        <div key={projId} className="app-card-item">
+
+                  {myApplications.length === 0 ? (
+                    <div className="empty-apps-box">
+                      <span className="empty-box-icon">📤</span>
+                      <p>No applications sent yet.</p>
+                      <p className="subtext">Browse open projects and click "Apply Now" to join a team!</p>
+                    </div>
+                  ) : (
+                    <div className="apps-list">
+                      {myApplications.map((app, idx) => (
+                        <div key={app._id || idx} className="app-card-item">
                           <div className="app-item-top">
-                            <strong>{p.title}</strong>
-                            <button
-                              type="button"
-                              className="btn btn-delete-sm"
-                              onClick={() => handleDeleteProject(projId, p.title)}
-                            >
-                              🗑️ Delete Project
-                            </button>
+                            <strong>{app.projectTitle || 'DevCollab Project'}</strong>
+                            <div className="app-status-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className={`status-tag ${app.status?.toLowerCase() || 'pending'}`}>
+                                ● {app.status || 'Pending'}
+                              </span>
+                              <button
+                                type="button"
+                                className="btn btn-delete-sm"
+                                title="Withdraw application"
+                                onClick={() => handleWithdrawApplication(app._id || idx)}
+                              >
+                                Withdraw ✕
+                              </button>
+                            </div>
                           </div>
-                          <div className="app-role-line">Category: <span>{p.category}</span> • Open Role: <strong>{p.openRole}</strong></div>
-                          <p className="app-pitch-text">{p.description}</p>
+                          <div className="app-role-line">Role Applied: <span>{app.roleApplied}</span></div>
+                          <p className="app-pitch-text">"{app.pitch}"</p>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
-            <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setIsProfileModalOpen(false)}>
-                Close Hub
+              {/* TAB 3: MY POSTED PROJECTS */}
+              {profileActiveTab === 'projects' && (
+                <div className="profile-tab-content">
+                  <div className="tab-section-intro">
+                    <span className="section-title">My Posted Projects</span>
+                    <span className="section-hint">Project posts published under your name</span>
+                  </div>
+
+                  {myOwnProjects.length === 0 ? (
+                    <div className="empty-apps-box">
+                      <span className="empty-box-icon">📁</span>
+                      <p>You haven't posted any projects yet.</p>
+                      <p className="subtext">Click "+ Post Project" in the navigation bar to publish your first task!</p>
+                    </div>
+                  ) : (
+                    <div className="apps-list">
+                      {myOwnProjects.map((p) => {
+                        const projId = p._id || p.id;
+                        return (
+                          <div key={projId} className="app-card-item">
+                            <div className="app-item-top">
+                              <strong>{p.title}</strong>
+                              <button
+                                type="button"
+                                className="btn btn-delete-sm"
+                                onClick={() => handleDeleteProject(projId, p.title)}
+                              >
+                                🗑️ Delete Project
+                              </button>
+                            </div>
+                            <div className="app-role-line">Category: <span>{p.category}</span> • Role: <strong>{p.openRole}</strong></div>
+                            <p className="app-pitch-text">{p.description}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Profile Drawer Footer with Logout Action */}
+            <div className="profile-drawer-footer">
+              <button
+                type="button"
+                className="btn btn-logout-full"
+                onClick={() => {
+                  setIsProfileModalOpen(false);
+                  handleLogout();
+                }}
+              >
+                <span>🚪</span> Logout from DevCollab
               </button>
             </div>
           </div>

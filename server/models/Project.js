@@ -43,6 +43,10 @@ const ProjectSchema = new mongoose.Schema(
       type: String,
       enum: ['Open', 'In Progress', 'Completed'],
       default: 'Open'
+    },
+    image: {
+      type: String,
+      default: ''
     }
   },
   {

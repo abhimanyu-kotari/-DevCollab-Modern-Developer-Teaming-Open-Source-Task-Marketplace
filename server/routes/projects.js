@@ -15,6 +15,7 @@ let memoryProjects = [
     openRole: 'Frontend Developer',
     ownerName: 'Abhimanyu Kotari',
     status: 'Open',
+    image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80',
     createdAt: new Date().toISOString()
   },
   {
@@ -26,6 +27,7 @@ let memoryProjects = [
     openRole: 'Backend Developer',
     ownerName: 'Dhanush V',
     status: 'Open',
+    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
     createdAt: new Date().toISOString()
   },
   {
@@ -37,6 +39,7 @@ let memoryProjects = [
     openRole: 'UI/UX Designer',
     ownerName: 'Aniketh',
     status: 'Open',
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
     createdAt: new Date().toISOString()
   },
   {
@@ -48,6 +51,7 @@ let memoryProjects = [
     openRole: 'Computer Vision Engineer',
     ownerName: 'Abhimanyu Kotari',
     status: 'Open',
+    image: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80',
     createdAt: new Date().toISOString()
   }
 ];
@@ -177,7 +181,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/projects - Create new project
 router.post('/', optionalAuth, async (req, res) => {
   try {
-    const { title, description, category, openRole, skillsRequired } = req.body;
+    const { title, description, category, openRole, skillsRequired, image } = req.body;
 
     // Validation
     if (!title || !description || !openRole) {
@@ -203,7 +207,8 @@ router.post('/', optionalAuth, async (req, res) => {
         skillsRequired: parsedSkills,
         owner: ownerId,
         ownerName,
-        status: 'Open'
+        status: 'Open',
+        image: image || ''
       });
 
       return res.status(201).json({
@@ -221,6 +226,7 @@ router.post('/', optionalAuth, async (req, res) => {
         skillsRequired: parsedSkills,
         ownerName,
         status: 'Open',
+        image: image || '',
         createdAt: new Date().toISOString()
       };
       memoryProjects.unshift(newProject);
