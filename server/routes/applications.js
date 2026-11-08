@@ -24,12 +24,24 @@ router.post('/', optionalAuth, async (req, res) => {
     const applicantId = req.user ? req.user.id : null;
 
     if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(projectId)) {
+      // Prevent duplicate applications
+      const existing = await Application.findOne({
+        project: projectId,
+        applicantEmail: email.toLowerCase()
+      });
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          error: 'You have already submitted an application for this project.'
+        });
+      }
+
       const application = await Application.create({
         project: projectId,
         projectTitle: projectTitle || 'DevCollab Project',
         applicant: applicantId,
         applicantName: name,
-        applicantEmail: email,
+        applicantEmail: email.toLowerCase(),
         roleApplied: roleApplied.trim(),
         pitch: pitch.trim(),
         status: 'Pending'
@@ -41,12 +53,22 @@ router.post('/', optionalAuth, async (req, res) => {
         application
       });
     } else {
+      const exists = memoryApplications.find(
+        a => String(a.project) === String(projectId) && a.applicantEmail.toLowerCase() === email.toLowerCase()
+      );
+      if (exists) {
+        return res.status(400).json({
+          success: false,
+          error: 'You have already submitted an application for this project.'
+        });
+      }
+
       const newApp = {
         _id: 'app_' + Date.now(),
         project: projectId,
         projectTitle: projectTitle || 'DevCollab Project',
         applicantName: name,
-        applicantEmail: email,
+        applicantEmail: email.toLowerCase(),
         roleApplied: roleApplied.trim(),
         pitch: pitch.trim(),
         status: 'Pending',
