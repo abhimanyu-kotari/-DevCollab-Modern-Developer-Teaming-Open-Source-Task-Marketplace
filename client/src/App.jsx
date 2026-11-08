@@ -620,19 +620,18 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="content-container">
-        {/* Unified Panoramic Hero Showcase with B&W Team Photo & Crisp Scrim */}
-        <section className="hero-panoramic-showcase">
-          <div className="hero-showcase-bg">
-            <img
-              src="/images/team-collaboration.jpg"
-              alt="DevCollab Engineering Team Collaboration"
-              className="hero-showcase-img"
-            />
-            <div className="hero-showcase-scrim"></div>
-          </div>
+      {/* Full-Bleed Rectangle Hero Section (Flows edge-to-edge across homepage, pure rectangle style) */}
+      <section className="hero-full-bleed-rectangle">
+        <div className="hero-showcase-bg">
+          <img
+            src="/images/team-collaboration.jpg"
+            alt="DevCollab Engineering Team Collaboration"
+            className="hero-showcase-img"
+          />
+          <div className="hero-showcase-scrim"></div>
+        </div>
 
+        <div className="hero-showcase-inner">
           <div className="hero-showcase-content">
             <div className="hero-indicator">
               <span className="hero-live-dot"></span>
@@ -646,8 +645,11 @@ export default function App() {
               Discover active engineering projects, claim specialized roles, and build verified collaborative software backed by real-time MongoDB tracking.
             </p>
           </div>
-        </section>
+        </div>
+      </section>
 
+      {/* Main Container */}
+      <main className="content-container">
         {/* Search & Category Filter Controls */}
         <section className="filter-panel">
           <div className="search-bar">
