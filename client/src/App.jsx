@@ -579,26 +579,22 @@ export default function App() {
               + Post Project
             </button>
 
-            {/* User Profile Button with Name (Opens Profile, Applications & Logout) */}
+            {/* User Profile Avatar (Round circular icon, clicking opens Profile Drawer) */}
             {currentUser && (
               <button
-                className="user-profile-button"
+                className="user-profile-round-btn"
                 onClick={() => setIsProfileModalOpen(true)}
-                title="Open Profile, Applications & Logout"
+                title={`Open profile for ${currentUser.name}`}
+                aria-label="User Profile"
               >
-                <div className="avatar-initial">
+                <div className="round-avatar">
                   {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                 </div>
-                <div className="user-btn-details">
-                  <span className="user-btn-name">{currentUser.name}</span>
-                  <span className="user-btn-role">{currentUser.role || 'Developer'}</span>
-                </div>
                 {receivedApplications.length > 0 && (
-                  <span className="received-badge" title={`${receivedApplications.length} candidate applications for your projects!`}>
+                  <span className="round-avatar-badge" title={`${receivedApplications.length} candidate applications`}>
                     {receivedApplications.length}
                   </span>
                 )}
-                <span className="profile-dropdown-arrow">▾</span>
               </button>
             )}
           </div>
@@ -624,28 +620,6 @@ export default function App() {
           <p className="hero-subtext">
             Discover active engineering projects, claim specialized roles, and build verified collaborative software backed by real-time MongoDB tracking.
           </p>
-
-          <div className="hero-meta-strip">
-            <div className="meta-item">
-              <span className="meta-value">{projects.length}+</span>
-              <span className="meta-label">Active Projects</span>
-            </div>
-            <div className="meta-separator">•</div>
-            <div className="meta-item">
-              <span className="meta-value">100%</span>
-              <span className="meta-label">REST API CRUD</span>
-            </div>
-            <div className="meta-separator">•</div>
-            <div className="meta-item">
-              <span className="meta-value">JWT</span>
-              <span className="meta-label">Auth Security</span>
-            </div>
-            <div className="meta-separator">•</div>
-            <div className="meta-item">
-              <span className="meta-value">Atlas</span>
-              <span className="meta-label">Cloud Database</span>
-            </div>
-          </div>
         </section>
 
         {/* Search & Category Filter Controls */}

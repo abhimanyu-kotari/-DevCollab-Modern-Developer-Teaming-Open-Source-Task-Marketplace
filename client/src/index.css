@@ -307,24 +307,62 @@ body::before {
   gap: 12px;
 }
 
-/* User Profile Trigger Button */
-.user-profile-button {
+/* User Profile Trigger Button (Round Circular Icon) */
+.user-profile-round-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #181b22;
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 3px 10px 3px 4px;
-  border-radius: 9999px;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  position: relative;
+  padding: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-.user-profile-button:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
+.user-profile-round-btn:hover {
+  border-color: rgba(99, 102, 241, 0.7);
+  transform: scale(1.06);
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.4);
 }
 
+.round-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.round-avatar-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background: #f43f5e;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--canvas);
+}
+
+/* Backward compatibility */
 .avatar-initial {
   width: 26px;
   height: 26px;
@@ -337,40 +375,6 @@ body::before {
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.user-btn-details {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  line-height: 1.15;
-}
-
-.user-btn-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.user-btn-role {
-  font-size: 9px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.received-badge {
-  background: var(--rose);
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 9999px;
-}
-
-.profile-dropdown-arrow {
-  font-size: 9px;
-  color: var(--text-tertiary);
 }
 
 /* =========================================================================
@@ -434,40 +438,7 @@ body::before {
   font-size: 15px;
   line-height: 1.6;
   max-width: 580px;
-  margin: 0 auto 28px;
-}
-
-.hero-meta-strip {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 8px 20px;
-  border-radius: 9999px;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.meta-value {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ffffff;
-  font-family: var(--font-mono);
-}
-
-.meta-label {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.meta-separator {
-  color: var(--border-hover);
-  font-size: 12px;
+  margin: 0 auto;
 }
 
 /* =========================================================================
