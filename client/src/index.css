@@ -383,7 +383,7 @@ body::before {
 }
 
 /* =========================================================================
-   FULL-BLEED RECTANGLE HERO SECTION (Full Image Cover with Light Dark Scrim)
+   FULL-BLEED RECTANGLE HERO SECTION (Flows fully edge-to-edge, zero brackets)
    ========================================================================= */
 .hero-full-bleed-rectangle {
   position: relative;
@@ -399,8 +399,11 @@ body::before {
 
 .hero-showcase-bg {
   position: absolute;
-  inset: 0;
-  width: 100%;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 58%;
+  max-width: 960px;
   height: 100%;
   pointer-events: none;
 }
@@ -409,14 +412,9 @@ body::before {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 15%;
+  object-position: center 10%;
   display: block;
-  filter: contrast(1.05) brightness(0.96);
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.hero-full-bleed-rectangle:hover .hero-showcase-img {
-  transform: scale(1.02);
+  filter: contrast(1.05) brightness(0.98);
 }
 
 .hero-showcase-scrim {
@@ -424,21 +422,10 @@ body::before {
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(8, 9, 11, 0.72) 0%,
-    rgba(8, 9, 11, 0.55) 42%,
-    rgba(8, 9, 11, 0.3) 72%,
-    rgba(8, 9, 11, 0.22) 100%
-  );
-  transition: background 0.4s ease;
-}
-
-.hero-full-bleed-rectangle:hover .hero-showcase-scrim {
-  background: linear-gradient(
-    90deg,
-    rgba(8, 9, 11, 0.65) 0%,
-    rgba(8, 9, 11, 0.48) 42%,
-    rgba(8, 9, 11, 0.25) 72%,
-    rgba(8, 9, 11, 0.18) 100%
+    #08090b 0%,
+    rgba(8, 9, 11, 0.82) 8%,
+    rgba(8, 9, 11, 0.25) 20%,
+    transparent 36%
   );
 }
 
@@ -454,7 +441,7 @@ body::before {
 }
 
 .hero-showcase-content {
-  max-width: 520px;
+  max-width: 500px;
   padding: 56px 0;
   text-align: left;
 }
@@ -469,12 +456,6 @@ body::before {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 16px;
-  background: rgba(8, 9, 11, 0.6);
-  padding: 4px 10px;
-  border-radius: 9999px;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  width: fit-content;
 }
 
 .hero-live-dot {
@@ -493,41 +474,40 @@ body::before {
   letter-spacing: -0.03em;
   margin-bottom: 14px;
   text-align: left;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
 }
 
 .hero-subtext {
-  color: #cbd5e1;
+  color: #94a3b8;
   font-size: 15px;
   line-height: 1.6;
   margin: 0;
   text-align: left;
-  max-width: 480px;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
+  max-width: 460px;
 }
 
 @media (max-width: 868px) {
   .hero-full-bleed-rectangle {
-    min-height: 380px;
+    min-height: auto;
+    flex-direction: column-reverse;
   }
   .hero-showcase-bg {
-    position: absolute;
+    position: relative;
     width: 100%;
     max-width: 100%;
-    height: 100%;
+    height: 300px;
   }
   .hero-showcase-img {
-    object-position: center 20%;
+    object-position: center;
   }
   .hero-showcase-scrim {
     background: linear-gradient(
       180deg,
-      rgba(8, 9, 11, 0.65) 0%,
-      rgba(8, 9, 11, 0.82) 100%
+      transparent 60%,
+      #08090b 100%
     );
   }
   .hero-showcase-content {
-    padding: 40px 0;
+    padding: 32px 0 24px;
     max-width: 100%;
   }
   .hero-heading {
