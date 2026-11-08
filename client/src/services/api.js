@@ -107,6 +107,18 @@ export const applicationsAPI = {
     return safeFetch(`/applications/my${query}`);
   },
 
+  getReceivedApplications: async (ownerName) => {
+    const query = ownerName ? `?ownerName=${encodeURIComponent(ownerName)}` : '';
+    return safeFetch(`/applications/received${query}`);
+  },
+
+  updateStatus: async (id, status) => {
+    return safeFetch(`/applications/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
+  },
+
   withdraw: async (id) => {
     return safeFetch(`/applications/${id}`, {
       method: 'DELETE'

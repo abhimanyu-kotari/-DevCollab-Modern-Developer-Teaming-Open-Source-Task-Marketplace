@@ -97,9 +97,11 @@ export default function App() {
   const [applyPitch, setApplyPitch] = useState('');
   const [applyRole, setApplyRole] = useState('');
 
-  // My Applications Modal
-  const [isAppsModalOpen, setIsAppsModalOpen] = useState(false);
-  const [myApplications, setMyApplications] = useState([]);
+  // Profile & Teaming Hub Modal
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileActiveTab, setProfileActiveTab] = useState('received'); // 'received', 'sent', 'projects'
+  const [myApplications, setMyApplications] = useState([]); // Applications sent by user
+  const [receivedApplications, setReceivedApplications] = useState([]); // Applications received on user's projects
 
   // Fetch projects from REST API with default fallback
   const fetchProjects = useCallback(async () => {
@@ -109,7 +111,6 @@ export default function App() {
         setProjects(data.projects);
         setApiConnected(true);
       } else if (data && data.projects && data.projects.length === 0 && !searchTerm && selectedCategory === 'All') {
-        // Fallback to default sample projects if database was just created
         setProjects(DEFAULT_PROJECTS);
         setApiConnected(true);
       } else if (data && data.projects) {
@@ -134,13 +135,29 @@ export default function App() {
     }
   }, []);
 
+  // Fetch received applications on projects created by current user
+  const fetchReceivedApplications = useCallback(async (userName) => {
+    if (!userName) return;
+    try {
+      const res = await applicationsAPI.getReceivedApplications(userName);
+      if (res && res.applications) {
+        setReceivedApplications(res.applications);
+      }
+    } catch (err) {
+      // Keep existing state
+    }
+  }, []);
+
   // Sync entire app state
   const syncAll = useCallback(async () => {
     await fetchProjects();
     if (currentUser?.email) {
       await fetchMyApplications(currentUser.email);
     }
-  }, [fetchProjects, fetchMyApplications, currentUser?.email]);
+    if (currentUser?.name) {
+      await fetchReceivedApplications(currentUser.name);
+    }
+  }, [fetchProjects, fetchMyApplications, fetchReceivedApplications, currentUser?.email, currentUser?.name]);
 
   // Real-time tab sync and auto-polling
   useEffect(() => {
@@ -186,6 +203,7 @@ export default function App() {
         setApiConnected(true);
         setCurrentScreen('main');
         fetchMyApplications(res.user.email);
+        fetchReceivedApplications(res.user.name);
       }
     } catch (err) {
       if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
@@ -229,6 +247,7 @@ export default function App() {
     setPassword('');
     setAuthError('');
     setMyApplications([]);
+    setReceivedApplications([]);
     setCurrentScreen('login');
   };
 
@@ -267,7 +286,7 @@ export default function App() {
     setNewRole('');
     setNewSkills('');
     setIsPostModalOpen(false);
-    alert('Project successfully posted to DevCollab marketplace!');
+    alert('Project successfully published to DevCollab!');
     fetchProjects();
   };
 
@@ -288,7 +307,7 @@ export default function App() {
 
   // Withdraw / Remove Application Handler
   const handleWithdrawApplication = async (appId) => {
-    if (!window.confirm("Do you want to withdraw and remove this application?")) {
+    if (!window.confirm("Do you want to withdraw this application?")) {
       return;
     }
 
@@ -299,18 +318,27 @@ export default function App() {
     }
 
     setMyApplications(prev => prev.filter(a => (a._id || a.id) !== appId));
-    alert('Application withdrawn successfully.');
+    alert('Application withdrawn.');
   };
 
-  // Check authorization: Owner or Lead Admin can delete
+  // Accept or Reject Candidate Application Handler
+  const handleUpdateStatus = async (appId, newStatus) => {
+    try {
+      await applicationsAPI.updateStatus(appId, newStatus);
+    } catch (err) {
+      console.warn('Status update fallback:', err.message);
+    }
+
+    setReceivedApplications(prev =>
+      prev.map(a => ((a._id || a.id) === appId ? { ...a, status: newStatus } : a))
+    );
+    alert(`Candidate marked as "${newStatus}".`);
+  };
+
+  // Check authorization: ONLY the project creator can delete their project
   const canDeleteProject = (p) => {
-    if (!currentUser) return false;
-    const isOwner = p.ownerName?.toLowerCase() === currentUser.name?.toLowerCase();
-    const isLeadOrAdmin =
-      currentUser.role === 'Full Stack Developer' ||
-      currentUser.name?.toLowerCase().includes('abhimanyu') ||
-      currentUser.email?.toLowerCase().includes('abhimanyu');
-    return isOwner || isLeadOrAdmin;
+    if (!currentUser || !currentUser.name) return false;
+    return p.ownerName?.toLowerCase() === currentUser.name.toLowerCase();
   };
 
   // Check if current user already applied to this project
@@ -329,7 +357,7 @@ export default function App() {
     }
     setSelectedProject(project);
     setApplyRole(project.openRole);
-    setApplyPitch(`Hi ${project.ownerName}, I have strong hands-on experience in ${project.skillsRequired?.slice(0, 2).join(' and ') || 'full stack development'} and would love to join your project!`);
+    setApplyPitch(`Hi ${project.ownerName}, I have strong experience in ${project.skillsRequired?.slice(0, 2).join(' and ') || 'development'} and would love to join your project!`);
     setIsApplyModalOpen(true);
   };
 
@@ -377,13 +405,10 @@ export default function App() {
     }
   };
 
-  // Open My Applications Modal
-  const openApplicationsModal = async () => {
-    setIsAppsModalOpen(true);
-    if (currentUser?.email) {
-      fetchMyApplications(currentUser.email);
-    }
-  };
+  // User's own projects
+  const myOwnProjects = projects.filter(p =>
+    p.ownerName?.toLowerCase() === currentUser?.name?.toLowerCase()
+  );
 
   // Real-time client-side filter
   const filteredProjects = projects.filter((p) => {
@@ -396,22 +421,17 @@ export default function App() {
   });
 
   // =========================================================================
-  // SCREEN 1: AUTHENTICATION SCREEN (Login & Sign Up)
+  // SCREEN 1: AUTHENTICATION SCREEN (Dark Theme)
   // =========================================================================
   if (currentScreen === 'login') {
     return (
-      <div className="login-container">
+      <div className="login-container dark-theme">
         <div className="login-card">
-          <div className="brand-badge-pill">
-            <span className="badge-sparkle">✨</span>
-            <span>RV University • CS3301 Full Stack</span>
-          </div>
-
           <div className="brand-hero-logo">
             <div className="brand-icon-box">⚡</div>
             <h2>Dev<span className="accent-text">Collab</span></h2>
           </div>
-          <p className="subtitle">The Modern Developer Teaming & Open Task Marketplace</p>
+          <p className="subtitle">The Developer Teaming & Open Source Task Marketplace</p>
 
           <div className="auth-tab-switch">
             <button
@@ -447,10 +467,10 @@ export default function App() {
             )}
 
             <div className="form-group">
-              <label>College Email *</label>
+              <label>Developer Email *</label>
               <input
                 type="email"
-                placeholder="student@rvu.edu.in"
+                placeholder="developer@domain.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -470,7 +490,7 @@ export default function App() {
             </div>
 
             <div className="form-group">
-              <label>Primary Skill Role</label>
+              <label>Primary Role</label>
               <select value={role} onChange={(e) => setRole(e.target.value)}>
                 <option value="Frontend Developer">Frontend Developer (React / UI)</option>
                 <option value="Backend Developer">Backend Developer (Node / Express)</option>
@@ -492,8 +512,8 @@ export default function App() {
               </div>
             )}
 
-            <button type="submit" className="btn btn-gradient-primary btn-block" disabled={authLoading}>
-              {authLoading ? 'Verifying...' : (authMode === 'login' ? 'Sign In with JWT →' : 'Register Account →')}
+            <button type="submit" className="btn btn-emerald-primary btn-block" disabled={authLoading}>
+              {authLoading ? 'Authenticating...' : (authMode === 'login' ? 'Sign In with JWT →' : 'Register Developer Account →')}
             </button>
           </form>
 
@@ -504,7 +524,7 @@ export default function App() {
           </div>
 
           <div className="login-footer-info">
-            <span>🛡️ Secured with Bcrypt Salt Hashing & Cryptographic JWT Tokens</span>
+            <span>🛡️ Bcrypt Salt Hashing & Cryptographic JWT Authorization</span>
           </div>
         </div>
       </div>
@@ -512,10 +532,10 @@ export default function App() {
   }
 
   // =========================================================================
-  // SCREEN 2: MAIN DASHBOARD & PROJECT MARKETPLACE
+  // SCREEN 2: MAIN DASHBOARD & PROJECT MARKETPLACE (Dark Theme)
   // =========================================================================
   return (
-    <div className="main-wrapper">
+    <div className="main-wrapper dark-theme">
       {/* Top Glassmorphic Navbar */}
       <header className="navbar">
         <div className="nav-container">
@@ -524,45 +544,53 @@ export default function App() {
             <div className="brand-icon-box">⚡</div>
             <div className="brand-title-wrap">
               <h2>Dev<span className="accent-text">Collab</span></h2>
-              <span className="badge-pill">v2.0 Live</span>
+              <span className="badge-pill">v2.0</span>
             </div>
           </div>
 
-          {/* Right: Status, Controls, User Card, Logout */}
+          {/* Right: + Post Project, My Applications, Profile (Name), Logout */}
           <div className="nav-right">
-            {/* Live API Status Pill */}
-            <div className="status-badge-container" title={apiConnected ? "Connected to Express & MongoDB Atlas" : "Operating in fallback mode"}>
-              <span className={`status-beacon ${apiConnected ? 'online' : 'offline'}`}></span>
-              <span className="status-text">{apiConnected ? 'Node + MongoDB Atlas' : 'In-Memory Mode'}</span>
-            </div>
-
-            <div className="nav-divider"></div>
+            {/* + Post Project Button */}
+            <button className="btn btn-emerald-primary btn-sm" onClick={() => setIsPostModalOpen(true)}>
+              <span className="btn-icon">⚡</span> + Post Project
+            </button>
 
             {/* My Applications Button */}
-            <button className="btn btn-secondary btn-sm nav-btn" onClick={openApplicationsModal}>
+            <button
+              className="btn btn-nav-secondary btn-sm"
+              onClick={() => {
+                setProfileActiveTab('sent');
+                setIsProfileModalOpen(true);
+              }}
+            >
               <span className="btn-icon">📋</span>
               My Applications
               <span className="counter-pill">{myApplications.length}</span>
             </button>
 
-            {/* Post Project Button */}
-            <button className="btn btn-gradient-primary btn-sm" onClick={() => setIsPostModalOpen(true)}>
-              <span className="btn-icon">✨</span> + Post Project
-            </button>
-
-            <div className="nav-divider"></div>
-
-            {/* User Profile Pill */}
+            {/* User Profile Button with Name (Click to open Team Management Hub) */}
             {currentUser && (
-              <div className="user-profile-badge">
-                <div className="avatar-gradient">
+              <button
+                className="user-profile-button"
+                onClick={() => {
+                  setProfileActiveTab('received');
+                  setIsProfileModalOpen(true);
+                }}
+                title="Open Profile & Candidate Applications"
+              >
+                <div className="avatar-initial">
                   {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                 </div>
-                <div className="user-badge-info">
-                  <span className="user-name">{currentUser.name}</span>
-                  <span className="user-role-tag">{currentUser.role || 'Developer'}</span>
+                <div className="user-btn-details">
+                  <span className="user-btn-name">{currentUser.name}</span>
+                  <span className="user-btn-role">{currentUser.role || 'Developer'}</span>
                 </div>
-              </div>
+                {receivedApplications.length > 0 && (
+                  <span className="received-badge" title={`${receivedApplications.length} candidate applications for your projects!`}>
+                    {receivedApplications.length}
+                  </span>
+                )}
+              </button>
             )}
 
             {/* Logout Button */}
@@ -580,22 +608,22 @@ export default function App() {
           <div className="hero-announcement">
             <span className="announcement-sparkle">🚀</span>
             <span>Developer Teaming & Open Task Marketplace</span>
-            <span className="announcement-tag">MERN Architecture</span>
+            <span className="announcement-tag">MERN Stack</span>
           </div>
 
           <h1 className="hero-heading">
             Find Teammates. Build Projects. <br />
-            <span className="hero-gradient-text">Ship Real Engineering.</span>
+            <span className="hero-gradient-text">Ship Real Code.</span>
           </h1>
 
           <p className="hero-subtext">
-            Connect with peer developers across RV University, claim open roles, and build high-velocity engineering teams backed by live MongoDB tracking.
+            Connect with peer developers, claim open roles, and form agile engineering teams backed by real-time MongoDB tracking.
           </p>
 
           <div className="hero-stats-row">
             <div className="stat-card">
               <span className="stat-number">{projects.length}+</span>
-              <span className="stat-label">Verified Projects</span>
+              <span className="stat-label">Active Projects</span>
             </div>
             <div className="stat-card">
               <span className="stat-number">100%</span>
@@ -652,7 +680,7 @@ export default function App() {
           {projectsLoading ? (
             <div className="empty-state">
               <div className="loading-spinner"></div>
-              <p>Loading marketplace projects from MongoDB Atlas...</p>
+              <p>Loading projects from MongoDB Atlas...</p>
             </div>
           ) : filteredProjects.length === 0 ? (
             <div className="empty-state">
@@ -682,7 +710,7 @@ export default function App() {
                     <span className="section-label">Required Tech Stack:</span>
                     <div className="tech-tags">
                       {p.skillsRequired && p.skillsRequired.map((skill, i) => (
-                        <span key={i} className="tech-pill">{skill}</span>
+                        <span key={i} className="tech-pill">#{skill}</span>
                       ))}
                     </div>
                   </div>
@@ -720,7 +748,7 @@ export default function App() {
                           Applied ✓
                         </button>
                       ) : (
-                        <button className="btn btn-primary btn-sm" onClick={() => openApply(p)}>
+                        <button className="btn btn-emerald-primary btn-sm" onClick={() => openApply(p)}>
                           Apply Now →
                         </button>
                       )}
@@ -732,6 +760,196 @@ export default function App() {
           )}
         </section>
       </main>
+
+      {/* DEVELOPER PROFILE & TEAM MANAGEMENT HUB MODAL */}
+      {isProfileModalOpen && (
+        <div className="modal-backdrop" onClick={() => setIsProfileModalOpen(false)}>
+          <div className="modal-content profile-hub-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title-wrap">
+                <div className="avatar-initial-large">
+                  {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div>
+                  <h3>{currentUser?.name || 'Developer Profile'}</h3>
+                  <span className="profile-role-sub">{currentUser?.role || 'Developer'} • {currentUser?.email}</span>
+                </div>
+              </div>
+              <button className="modal-close" onClick={() => setIsProfileModalOpen(false)}>✕</button>
+            </div>
+
+            {/* Profile Navigation Tabs */}
+            <div className="profile-tabs-nav">
+              <button
+                type="button"
+                className={`profile-tab-item ${profileActiveTab === 'received' ? 'active' : ''}`}
+                onClick={() => setProfileActiveTab('received')}
+              >
+                📥 Candidate Inquiries ({receivedApplications.length})
+              </button>
+              <button
+                type="button"
+                className={`profile-tab-item ${profileActiveTab === 'sent' ? 'active' : ''}`}
+                onClick={() => setProfileActiveTab('sent')}
+              >
+                📤 My Sent Applications ({myApplications.length})
+              </button>
+              <button
+                type="button"
+                className={`profile-tab-item ${profileActiveTab === 'projects' ? 'active' : ''}`}
+                onClick={() => setProfileActiveTab('projects')}
+              >
+                📁 My Posted Projects ({myOwnProjects.length})
+              </button>
+            </div>
+
+            {/* TAB 1: RECEIVED CANDIDATE APPLICATIONS */}
+            {profileActiveTab === 'received' && (
+              <div className="profile-tab-content">
+                <p className="tab-explanation-text">
+                  Candidates who submitted applications to join projects you lead:
+                </p>
+
+                {receivedApplications.length === 0 ? (
+                  <div className="empty-apps-box">
+                    <span className="empty-box-icon">📬</span>
+                    <p>No candidates have applied to your projects yet.</p>
+                    <p className="subtext">When other developers apply to your projects, their pitch and details will appear here for you to accept or decline!</p>
+                  </div>
+                ) : (
+                  <div className="apps-list">
+                    {receivedApplications.map((app, idx) => (
+                      <div key={app._id || idx} className="app-card-item candidate-card">
+                        <div className="app-item-top">
+                          <div>
+                            <strong>{app.applicantName}</strong>
+                            <span className="candidate-email"> ({app.applicantEmail})</span>
+                          </div>
+                          <span className={`status-tag ${app.status?.toLowerCase() || 'pending'}`}>
+                            ● {app.status || 'Pending'}
+                          </span>
+                        </div>
+
+                        <div className="app-role-line">
+                          Applied for: <strong>{app.roleApplied}</strong> on <em>"{app.projectTitle}"</em>
+                        </div>
+
+                        <p className="app-pitch-text">"{app.pitch}"</p>
+
+                        <div className="candidate-action-buttons">
+                          <button
+                            type="button"
+                            className="btn btn-accept-sm"
+                            disabled={app.status === 'Accepted'}
+                            onClick={() => handleUpdateStatus(app._id || app.id, 'Accepted')}
+                          >
+                            ✓ Accept Candidate
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-reject-sm"
+                            disabled={app.status === 'Rejected'}
+                            onClick={() => handleUpdateStatus(app._id || app.id, 'Rejected')}
+                          >
+                            ✕ Decline
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: MY SENT APPLICATIONS */}
+            {profileActiveTab === 'sent' && (
+              <div className="profile-tab-content">
+                <p className="tab-explanation-text">
+                  Applications you submitted to join other development teams:
+                </p>
+
+                {myApplications.length === 0 ? (
+                  <div className="empty-apps-box">
+                    <span className="empty-box-icon">📤</span>
+                    <p>You haven't submitted any applications yet.</p>
+                    <p className="subtext">Browse open projects on the marketplace and click "Apply Now" to join a team!</p>
+                  </div>
+                ) : (
+                  <div className="apps-list">
+                    {myApplications.map((app, idx) => (
+                      <div key={app._id || idx} className="app-card-item">
+                        <div className="app-item-top">
+                          <strong>{app.projectTitle || 'DevCollab Project'}</strong>
+                          <div className="app-status-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className={`status-tag ${app.status?.toLowerCase() || 'pending'}`}>
+                              ● {app.status || 'Pending'}
+                            </span>
+                            <button
+                              type="button"
+                              className="btn btn-delete-sm"
+                              title="Withdraw application"
+                              onClick={() => handleWithdrawApplication(app._id || idx)}
+                            >
+                              Withdraw ✕
+                            </button>
+                          </div>
+                        </div>
+                        <div className="app-role-line">Role Applied: <span>{app.roleApplied}</span></div>
+                        <p className="app-pitch-text">"{app.pitch}"</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: MY POSTED PROJECTS */}
+            {profileActiveTab === 'projects' && (
+              <div className="profile-tab-content">
+                <p className="tab-explanation-text">
+                  Projects published under your ownership on the marketplace:
+                </p>
+
+                {myOwnProjects.length === 0 ? (
+                  <div className="empty-apps-box">
+                    <span className="empty-box-icon">📁</span>
+                    <p>You haven't posted any projects yet.</p>
+                    <p className="subtext">Click the "+ Post Project" button in the top navigation bar to create your first task!</p>
+                  </div>
+                ) : (
+                  <div className="apps-list">
+                    {myOwnProjects.map((p) => {
+                      const projId = p._id || p.id;
+                      return (
+                        <div key={projId} className="app-card-item">
+                          <div className="app-item-top">
+                            <strong>{p.title}</strong>
+                            <button
+                              type="button"
+                              className="btn btn-delete-sm"
+                              onClick={() => handleDeleteProject(projId, p.title)}
+                            >
+                              🗑️ Delete Project
+                            </button>
+                          </div>
+                          <div className="app-role-line">Category: <span>{p.category}</span> • Open Role: <strong>{p.openRole}</strong></div>
+                          <p className="app-pitch-text">{p.description}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setIsProfileModalOpen(false)}>
+                Close Hub
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* POST PROJECT MODAL */}
       {isPostModalOpen && (
@@ -803,7 +1021,7 @@ export default function App() {
                 <button type="button" className="btn btn-secondary" onClick={() => setIsPostModalOpen(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-gradient-primary">
+                <button type="submit" className="btn btn-emerald-primary">
                   Publish to Marketplace (POST)
                 </button>
               </div>
@@ -855,7 +1073,7 @@ export default function App() {
                 <button type="button" className="btn btn-secondary" onClick={() => setIsApplyModalOpen(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-gradient-primary">
+                <button type="submit" className="btn btn-emerald-primary">
                   Submit Application (POST)
                 </button>
               </div>
@@ -864,65 +1082,11 @@ export default function App() {
         </div>
       )}
 
-      {/* MY APPLICATIONS MODAL */}
-      {isAppsModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsAppsModalOpen(false)}>
-          <div className="modal-content apps-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-title-wrap">
-                <span className="modal-icon">📋</span>
-                <h3>My Submitted Applications</h3>
-              </div>
-              <button className="modal-close" onClick={() => setIsAppsModalOpen(false)}>✕</button>
-            </div>
-
-            <div className="apps-list">
-              {myApplications.length === 0 ? (
-                <div className="empty-apps-box">
-                  <span className="empty-box-icon">📬</span>
-                  <p>You haven't submitted any applications yet.</p>
-                  <p className="subtext">Browse open projects on the marketplace and click "Apply Now" to join a team!</p>
-                </div>
-              ) : (
-                myApplications.map((app, idx) => (
-                  <div key={app._id || idx} className="app-card-item">
-                    <div className="app-item-top">
-                      <strong>{app.projectTitle || 'DevCollab Project'}</strong>
-                      <div className="app-status-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className={`status-tag ${app.status?.toLowerCase() || 'pending'}`}>
-                          ● {app.status || 'Pending'}
-                        </span>
-                        <button
-                          type="button"
-                          className="btn btn-delete-sm"
-                          title="Withdraw application"
-                          onClick={() => handleWithdrawApplication(app._id || idx)}
-                        >
-                          Withdraw ✕
-                        </button>
-                      </div>
-                    </div>
-                    <div className="app-role-line">Applied for: <span>{app.roleApplied}</span></div>
-                    <p className="app-pitch-text">"{app.pitch}"</p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setIsAppsModalOpen(false)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
+      {/* Clean Modern Footer (Without RV University text) */}
       <footer className="footer">
         <div className="footer-content">
-          <p><strong>DevCollab Platform</strong> • RV University CS3301 Full Stack Development CIE-2 (Phase 2)</p>
-          <p className="footer-sub">MERN Stack Architecture: MongoDB Atlas Cloud + Express.js REST API + React.js SPA + Node.js Engine</p>
+          <p><strong>DevCollab</strong> • Modern Developer Teaming & Open Source Task Marketplace</p>
+          <p className="footer-sub">MongoDB Atlas Cloud • Express REST API • React 18 SPA • Node.js Engine</p>
         </div>
       </footer>
     </div>
