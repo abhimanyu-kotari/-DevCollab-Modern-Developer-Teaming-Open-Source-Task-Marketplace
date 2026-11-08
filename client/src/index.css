@@ -44,13 +44,18 @@ body {
   min-height: 100vh;
 }
 
-/* Subtle architectural grid pattern */
+/* Perspective 3D Wireframe Grid Background (Homepage & Global) */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background-image: 
-    radial-gradient(ellipse 60% 40% at 50% -10%, rgba(99, 102, 241, 0.08), transparent 70%);
+    radial-gradient(ellipse 80% 65% at 50% 50%, rgba(8, 9, 11, 0.45) 0%, rgba(8, 9, 11, 0.94) 100%),
+    url('/images/bg-grid.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.45;
   pointer-events: none;
   z-index: 0;
 }
@@ -1394,16 +1399,26 @@ body::before {
   justify-content: center;
   padding: 20px;
   background-color: var(--canvas);
+  background-image: 
+    radial-gradient(ellipse at center, rgba(8, 9, 11, 0.45) 0%, rgba(8, 9, 11, 0.92) 85%),
+    url('/images/bg-grid.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
 }
 
 .login-card {
   width: 100%;
   max-width: 380px;
-  background: var(--surface);
-  border: 1px solid var(--border-hover);
+  background: rgba(15, 17, 21, 0.88);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-md);
   padding: 28px 24px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  position: relative;
+  z-index: 2;
 }
 
 .brand-hero-logo {
