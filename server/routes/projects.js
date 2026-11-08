@@ -72,6 +72,49 @@ router.get('/', async (req, res) => {
         ];
       }
 
+      // If database collection is fresh and empty, auto-seed default projects
+      const totalCount = await Project.countDocuments();
+      if (totalCount === 0) {
+        await Project.insertMany([
+          {
+            title: 'AI Resume Matcher',
+            category: 'Full Stack',
+            description: 'Web application to match student resumes with live tech job descriptions using NLP and vector embeddings.',
+            skillsRequired: ['React', 'Node.js', 'MongoDB', 'Python'],
+            openRole: 'Frontend Developer',
+            ownerName: 'Abhimanyu Kotari',
+            status: 'Open'
+          },
+          {
+            title: 'Campus Event Booking System',
+            category: 'Web Development',
+            description: 'Portal for university clubs to book auditorium halls and manage student registrations with calendar scheduling.',
+            skillsRequired: ['React', 'Express.js', 'CSS', 'PostgreSQL'],
+            openRole: 'Backend Developer',
+            ownerName: 'Dhanush V',
+            status: 'Open'
+          },
+          {
+            title: 'Student Expense Tracker',
+            category: 'MERN Stack',
+            description: 'A clean budget management app for college roommates to split hostel groceries, utilities, and daily room expenses.',
+            skillsRequired: ['JavaScript', 'React', 'Node.js', 'Chart.js'],
+            openRole: 'UI/UX Designer',
+            ownerName: 'Aniketh',
+            status: 'Open'
+          },
+          {
+            title: 'Autonomous Drone Navigation Simulator',
+            category: 'AI / ML',
+            description: 'Simulation environment for testing micro-quadcopter vision algorithms and path planning in 3D space.',
+            skillsRequired: ['Python', 'OpenCV', 'PyTorch', 'ROS'],
+            openRole: 'Computer Vision Engineer',
+            ownerName: 'Abhimanyu Kotari',
+            status: 'Open'
+          }
+        ]);
+      }
+
       const projects = await Project.find(query).sort({ createdAt: -1 });
       return res.status(200).json({
         success: true,
