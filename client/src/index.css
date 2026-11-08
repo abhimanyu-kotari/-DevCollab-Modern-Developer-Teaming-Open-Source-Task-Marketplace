@@ -645,30 +645,30 @@ body::before {
 }
 
 .project-card {
-  background: #eef2f6;
-  border: 1px solid #cbd5e1;
+  background: linear-gradient(155deg, #c5cad4 0%, #adb5c2 45%, #9aa2b0 100%);
+  border: 1px solid #7c8594;
   border-radius: var(--radius-md);
   overflow: hidden;
   padding: 0;
   display: flex;
   flex-direction: column;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .project-card:hover {
-  border-color: #94a3b8;
-  background: #ffffff;
+  border-color: #e2e8f0;
+  background: linear-gradient(155deg, #d3d8e2 0%, #bac2ce 45%, #a6aebc 100%);
   transform: translateY(-3px);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
 .card-image-wrap {
   position: relative;
   width: 100%;
   height: 180px;
-  background: #e2e8f0;
+  background: #8e96a3;
   overflow: hidden;
 }
 
@@ -746,7 +746,7 @@ body::before {
 .project-title {
   font-size: 16px;
   font-weight: 700;
-  color: #0f172a;
+  color: #090d16;
   margin-bottom: 8px;
   line-height: 1.35;
   letter-spacing: -0.01em;
@@ -754,18 +754,20 @@ body::before {
 
 .project-desc {
   font-size: 13px;
-  color: #334155;
+  color: #1f2633;
   line-height: 1.55;
   margin-bottom: 16px;
   flex-grow: 1;
+  font-weight: 450;
 }
 
 .role-callout {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(4px);
   border-radius: var(--radius-sm);
   padding: 8px 12px;
   margin-bottom: 14px;
@@ -773,15 +775,15 @@ body::before {
 
 .role-callout-label {
   font-size: 11px;
-  color: #64748b;
+  color: #4b5563;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .role-callout-role {
   font-size: 12px;
-  color: #0f172a;
+  color: #090d16;
   font-weight: 700;
 }
 
@@ -798,19 +800,19 @@ body::before {
 .tech-pill {
   font-size: 11px;
   font-family: var(--font-mono);
-  background: #ffffff;
-  color: #1e293b;
-  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.5);
+  color: #090d16;
+  border: 1px solid rgba(255, 255, 255, 0.7);
   padding: 2px 7px;
   border-radius: var(--radius-xs);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
   padding-top: 14px;
 }
 
@@ -823,15 +825,15 @@ body::before {
 .owner-avatar {
   width: 24px;
   height: 24px;
-  background: #e2e8f0;
-  color: #1e293b;
+  background: rgba(255, 255, 255, 0.55);
+  color: #090d16;
   border-radius: 50%;
   font-size: 10px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .owner-text-wrap {
@@ -842,15 +844,15 @@ body::before {
 
 .owner-label {
   font-size: 9px;
-  color: #64748b;
+  color: #4b5563;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .owner-name {
   font-size: 12px;
-  color: #0f172a;
-  font-weight: 600;
+  color: #090d16;
+  font-weight: 700;
 }
 
 .card-actions-group {
@@ -860,21 +862,22 @@ body::before {
 }
 
 .project-card .pill-applied {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: #065f46;
+  color: #ffffff;
+  border: 1px solid #047857;
   font-weight: 600;
 }
 
 .project-card .btn-delete-sm {
-  background: #fee2e2;
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  color: #dc2626;
+  background: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  color: #991b1b;
 }
 
 .project-card .btn-delete-sm:hover {
-  background: #fecaca;
-  border-color: #b91c1c;
+  background: #fee2e2;
+  border-color: #dc2626;
+  color: #7f1d1d;
 }
 
 /* =========================================================================
