@@ -440,10 +440,16 @@ export default function App() {
       <div className="login-container dark-theme">
         <div className="login-card">
           <div className="brand-hero-logo">
-            <div className="brand-icon-box">⚡</div>
-            <h2>Dev<span className="accent-text">Collab</span></h2>
+            <div className="brand-icon-box">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+              </svg>
+            </div>
+            <span className="brand-title">DevCollab</span>
           </div>
-          <p className="subtitle">The Developer Teaming & Open Source Task Marketplace</p>
+          <p className="subtitle">Developer teaming & open-source marketplace</p>
 
           <div className="auth-tab-switch">
             <button
@@ -479,7 +485,7 @@ export default function App() {
             )}
 
             <div className="form-group">
-              <label>Developer Email *</label>
+              <label>Email *</label>
               <input
                 type="email"
                 placeholder="developer@domain.com"
@@ -524,19 +530,19 @@ export default function App() {
               </div>
             )}
 
-            <button type="submit" className="btn btn-emerald-primary btn-block" disabled={authLoading}>
-              {authLoading ? 'Authenticating...' : (authMode === 'login' ? 'Sign In with JWT →' : 'Register Developer Account →')}
+            <button type="submit" className="btn btn-action-primary btn-block" disabled={authLoading}>
+              {authLoading ? 'Authenticating...' : (authMode === 'login' ? 'Sign In' : 'Create Account')}
             </button>
           </form>
 
           <div className="guest-action">
             <button type="button" className="btn-link" onClick={handleGuest}>
-              Skip Login & Explore as Guest →
+              Continue as guest
             </button>
           </div>
 
           <div className="login-footer-info">
-            <span>🛡️ Bcrypt Salt Hashing & Cryptographic JWT Authorization</span>
+            <span>Secure session authorization with Bcrypt & JWT</span>
           </div>
         </div>
       </div>
@@ -553,9 +559,15 @@ export default function App() {
         <div className="nav-container">
           {/* Left: Brand Logo */}
           <div className="nav-brand">
-            <div className="brand-icon-box">⚡</div>
+            <div className="brand-icon-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+              </svg>
+            </div>
             <div className="brand-title-wrap">
-              <h2>Dev<span className="accent-text">Collab</span></h2>
+              <span className="brand-title">DevCollab</span>
               <span className="badge-pill">v2.0</span>
             </div>
           </div>
@@ -563,8 +575,8 @@ export default function App() {
           {/* Right: + Post Project & User Profile (All user actions consolidated) */}
           <div className="nav-right">
             {/* + Post Project Button */}
-            <button className="btn btn-emerald-primary btn-sm" onClick={() => setIsPostModalOpen(true)}>
-              <span className="btn-icon">⚡</span> + Post Project
+            <button className="btn btn-action-primary btn-sm" onClick={() => setIsPostModalOpen(true)}>
+              + Post Project
             </button>
 
             {/* User Profile Button with Name (Opens Profile, Applications & Logout) */}
@@ -595,73 +607,43 @@ export default function App() {
 
       {/* Main Container */}
       <main className="content-container">
-        {/* Hero Section with Developer Visual Showcase */}
+        {/* Designer Hero Section */}
         <section className="dashboard-hero">
-          <div className="hero-split-grid">
-            <div className="hero-content-col">
-              <div className="hero-announcement">
-                <span className="announcement-sparkle">🚀</span>
-                <span>Developer Teaming & Open Task Marketplace</span>
-                <span className="announcement-tag">MERN Stack</span>
-              </div>
+          <div className="hero-announcement">
+            <span className="pulse-dot"></span>
+            <span>Live Developer Network</span>
+            <span className="announcement-divider">/</span>
+            <span className="announcement-tag">MERN Stack</span>
+          </div>
 
-              <h1 className="hero-heading">
-                Find Teammates. Build Projects. <br />
-                <span className="hero-gradient-text">Ship Real Code.</span>
-              </h1>
+          <h1 className="hero-heading">
+            Where developers team up <br />
+            and ship open-source.
+          </h1>
 
-              <p className="hero-subtext">
-                Connect with peer developers, claim open roles, and form agile engineering teams backed by real-time MongoDB Atlas tracking.
-              </p>
+          <p className="hero-subtext">
+            Discover active engineering projects, claim specialized roles, and build verified collaborative software backed by real-time MongoDB tracking.
+          </p>
 
-              <div className="hero-stats-row">
-                <div className="stat-card">
-                  <span className="stat-number">{projects.length}+</span>
-                  <span className="stat-label">Active Projects</span>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-number">100%</span>
-                  <span className="stat-label">REST API CRUD</span>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-number">JWT</span>
-                  <span className="stat-label">Bcrypt Security</span>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-number">Atlas</span>
-                  <span className="stat-label">Cloud Database</span>
-                </div>
-              </div>
+          <div className="hero-meta-strip">
+            <div className="meta-item">
+              <span className="meta-value">{projects.length}+</span>
+              <span className="meta-label">Active Projects</span>
             </div>
-
-            <div className="hero-visual-col">
-              <div className="hero-ide-window">
-                <div className="ide-window-header">
-                  <div className="ide-window-dots">
-                    <span className="dot dot-red"></span>
-                    <span className="dot dot-yellow"></span>
-                    <span className="dot dot-green"></span>
-                  </div>
-                  <span className="ide-window-title">devcollab-workspace // sprint-terminal</span>
-                  <span className="ide-window-status">● Live Sync</span>
-                </div>
-                <div className="ide-window-body">
-                  <img
-                    src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80"
-                    alt="Developer Teaming Coding Workspace"
-                    className="ide-banner-img"
-                  />
-                  <div className="ide-floating-overlay">
-                    <div className="ide-glass-chip">
-                      <span className="chip-spark">⚡</span>
-                      <div>
-                        <strong>Agile Teaming In Progress</strong>
-                        <span>4+ Verified Projects Active</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="meta-separator">•</div>
+            <div className="meta-item">
+              <span className="meta-value">100%</span>
+              <span className="meta-label">REST API CRUD</span>
+            </div>
+            <div className="meta-separator">•</div>
+            <div className="meta-item">
+              <span className="meta-value">JWT</span>
+              <span className="meta-label">Auth Security</span>
+            </div>
+            <div className="meta-separator">•</div>
+            <div className="meta-item">
+              <span className="meta-value">Atlas</span>
+              <span className="meta-label">Cloud Database</span>
             </div>
           </div>
         </section>
@@ -669,10 +651,13 @@ export default function App() {
         {/* Search & Category Filter Controls */}
         <section className="filter-panel">
           <div className="search-bar">
-            <span className="search-icon">🔍</span>
+            <svg className="search-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             <input
               type="text"
-              placeholder="Search by project title, keyword, or tech skill (e.g. React, MongoDB)..."
+              placeholder="Search projects by title, keyword, or required tech skills..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -683,11 +668,11 @@ export default function App() {
 
           <div className="category-chips">
             {[
-              { id: 'All', label: '🌟 All Projects' },
-              { id: 'Full Stack', label: '💻 Full Stack' },
-              { id: 'Web Development', label: '🌐 Web Development' },
-              { id: 'MERN Stack', label: '⚡ MERN Stack' },
-              { id: 'AI / ML', label: '🤖 AI / ML' }
+              { id: 'All', label: 'All Projects' },
+              { id: 'Full Stack', label: 'Full Stack' },
+              { id: 'Web Development', label: 'Web Development' },
+              { id: 'MERN Stack', label: 'MERN Stack' },
+              { id: 'AI / ML', label: 'AI / ML' }
             ].map((cat) => (
               <button
                 key={cat.id}
@@ -706,89 +691,78 @@ export default function App() {
           {projectsLoading ? (
             <div className="empty-state">
               <div className="loading-spinner"></div>
-              <p>Loading projects from MongoDB Atlas...</p>
+              <p>Connecting to MongoDB Atlas...</p>
             </div>
           ) : filteredProjects.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-icon">📂</div>
               <h3>No matching projects found</h3>
-              <p>Try clearing your search query or click "+ Post Project" to publish a new task!</p>
+              <p>Try clearing your search query or click "+ Post Project" to publish a new task.</p>
             </div>
           ) : (
             filteredProjects.map((p) => {
               const projId = p._id || p.id;
               const applied = isAlreadyApplied(projId);
-              const coverImage = p.image || CATEGORY_COVERS[p.category] || CATEGORY_COVERS['Full Stack'];
 
               return (
                 <article key={projId} className="project-card">
-                  {/* Project Cover Image */}
-                  <div className="project-card-image-wrap">
-                    <img
-                      src={coverImage}
-                      alt={p.title}
-                      className="project-card-image"
-                      loading="lazy"
-                    />
-                    <div className="project-image-gradient"></div>
-                    <span className="category-tag-floating">{p.category || 'General'}</span>
-                    <span className="status-indicator-floating">
-                      <span className="status-dot-pulse"></span>
+                  <div className="card-top-bar">
+                    <span className="category-pill">{p.category || 'General'}</span>
+                    <span className="status-pill">
+                      <span className="status-dot"></span>
                       {p.status || 'Open'}
                     </span>
                   </div>
 
-                  <div className="project-card-body">
-                    <h3 className="project-title">{p.title}</h3>
-                    <p className="project-desc">{p.description}</p>
+                  <h3 className="project-title">{p.title}</h3>
+                  <p className="project-desc">{p.description}</p>
 
-                    <div className="tech-section">
-                      <span className="section-label">Required Tech Stack:</span>
-                      <div className="tech-tags">
-                        {p.skillsRequired && p.skillsRequired.map((skill, i) => (
-                          <span key={i} className="tech-pill">#{skill}</span>
-                        ))}
+                  <div className="role-callout">
+                    <span className="role-callout-label">Seeking</span>
+                    <strong className="role-callout-role">{p.openRole}</strong>
+                  </div>
+
+                  <div className="tech-section">
+                    <div className="tech-tags">
+                      {p.skillsRequired && p.skillsRequired.map((skill, i) => (
+                        <span key={i} className="tech-pill">{skill}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="card-footer">
+                    <div className="owner-info">
+                      <div className="owner-avatar">
+                        {p.ownerName ? p.ownerName.charAt(0).toUpperCase() : 'D'}
+                      </div>
+                      <div className="owner-text-wrap">
+                        <span className="owner-label">Lead</span>
+                        <span className="owner-name">{p.ownerName || 'Developer'}</span>
                       </div>
                     </div>
 
-                    <div className="role-callout">
-                      <span className="role-callout-icon">🎯</span>
-                      <div className="role-callout-text">
-                        <span className="role-callout-label">Open Position</span>
-                        <strong>{p.openRole}</strong>
-                      </div>
-                    </div>
+                    <div className="card-actions-group">
+                      {/* Delete Button (Only Owner) */}
+                      {canDeleteProject(p) && (
+                        <button
+                          type="button"
+                          className="btn btn-delete-sm"
+                          title="Delete this project post"
+                          onClick={() => handleDeleteProject(projId, p.title)}
+                        >
+                          Delete
+                        </button>
+                      )}
 
-                    <div className="card-footer">
-                      <div className="owner-info">
-                        <span className="owner-label">Project Lead</span>
-                        <span className="owner-name">{p.ownerName || 'Student'}</span>
-                      </div>
-
-                      <div className="card-actions-group">
-                        {/* Delete Button (Only Owner) */}
-                        {canDeleteProject(p) && (
-                          <button
-                            type="button"
-                            className="btn btn-delete-sm"
-                            title="Delete this project post"
-                            onClick={() => handleDeleteProject(projId, p.title)}
-                          >
-                            🗑️ Delete
-                          </button>
-                        )}
-
-                        {/* Apply Button */}
-                        {applied ? (
-                          <button className="btn btn-applied" disabled title="Already applied">
-                            Applied ✓
-                          </button>
-                        ) : (
-                          <button className="btn btn-emerald-primary btn-sm" onClick={() => openApply(p)}>
-                            Apply Now →
-                          </button>
-                        )}
-                      </div>
+                      {/* Apply Button */}
+                      {applied ? (
+                        <span className="pill-applied">
+                          Applied ✓
+                        </span>
+                      ) : (
+                        <button className="btn btn-apply-primary" onClick={() => openApply(p)}>
+                          Apply to Team →
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -805,7 +779,6 @@ export default function App() {
             {/* Drawer Header */}
             <div className="profile-drawer-header">
               <div className="profile-drawer-title">
-                <span className="drawer-icon">⚡</span>
                 <h3>Developer Profile</h3>
               </div>
               <button className="modal-close" onClick={() => setIsProfileModalOpen(false)}>✕</button>
@@ -856,21 +829,21 @@ export default function App() {
                 className={`profile-tab-item ${profileActiveTab === 'received' ? 'active' : ''}`}
                 onClick={() => setProfileActiveTab('received')}
               >
-                📥 Inquiries ({receivedApplications.length})
+                Inquiries ({receivedApplications.length})
               </button>
               <button
                 type="button"
                 className={`profile-tab-item ${profileActiveTab === 'sent' ? 'active' : ''}`}
                 onClick={() => setProfileActiveTab('sent')}
               >
-                📤 Applications ({myApplications.length})
+                My Applications ({myApplications.length})
               </button>
               <button
                 type="button"
                 className={`profile-tab-item ${profileActiveTab === 'projects' ? 'active' : ''}`}
                 onClick={() => setProfileActiveTab('projects')}
               >
-                📁 Projects ({myOwnProjects.length})
+                My Projects ({myOwnProjects.length})
               </button>
             </div>
 
@@ -886,9 +859,8 @@ export default function App() {
 
                   {receivedApplications.length === 0 ? (
                     <div className="empty-apps-box">
-                      <span className="empty-box-icon">📬</span>
-                      <p>No candidate inquiries yet.</p>
-                      <p className="subtext">When developers apply to projects you lead, their requests appear here for your review.</p>
+                      <p>No candidate inquiries yet</p>
+                      <p className="subtext">When developers apply to projects you lead, their requests will appear here for review.</p>
                     </div>
                   ) : (
                     <div className="apps-list">
@@ -917,7 +889,7 @@ export default function App() {
                               disabled={app.status === 'Accepted'}
                               onClick={() => handleUpdateStatus(app._id || app.id, 'Accepted')}
                             >
-                              ✓ Accept Candidate
+                              Accept Candidate
                             </button>
                             <button
                               type="button"
@@ -925,7 +897,7 @@ export default function App() {
                               disabled={app.status === 'Rejected'}
                               onClick={() => handleUpdateStatus(app._id || app.id, 'Rejected')}
                             >
-                              ✕ Decline
+                              Decline
                             </button>
                           </div>
                         </div>
@@ -945,9 +917,8 @@ export default function App() {
 
                   {myApplications.length === 0 ? (
                     <div className="empty-apps-box">
-                      <span className="empty-box-icon">📤</span>
-                      <p>No applications sent yet.</p>
-                      <p className="subtext">Browse open projects and click "Apply Now" to join a team!</p>
+                      <p>No applications sent yet</p>
+                      <p className="subtext">Browse open projects and click "Apply to Team" to submit an application.</p>
                     </div>
                   ) : (
                     <div className="apps-list">
@@ -965,7 +936,7 @@ export default function App() {
                                 title="Withdraw application"
                                 onClick={() => handleWithdrawApplication(app._id || idx)}
                               >
-                                Withdraw ✕
+                                Withdraw
                               </button>
                             </div>
                           </div>
@@ -983,14 +954,13 @@ export default function App() {
                 <div className="profile-tab-content">
                   <div className="tab-section-intro">
                     <span className="section-title">My Posted Projects</span>
-                    <span className="section-hint">Project posts published under your name</span>
+                    <span className="section-hint">Projects published under your profile</span>
                   </div>
 
                   {myOwnProjects.length === 0 ? (
                     <div className="empty-apps-box">
-                      <span className="empty-box-icon">📁</span>
-                      <p>You haven't posted any projects yet.</p>
-                      <p className="subtext">Click "+ Post Project" in the navigation bar to publish your first task!</p>
+                      <p>You haven't posted any projects yet</p>
+                      <p className="subtext">Click "+ Post Project" in the navigation bar to publish your first task.</p>
                     </div>
                   ) : (
                     <div className="apps-list">
@@ -1005,7 +975,7 @@ export default function App() {
                                 className="btn btn-delete-sm"
                                 onClick={() => handleDeleteProject(projId, p.title)}
                               >
-                                🗑️ Delete Project
+                                Delete
                               </button>
                             </div>
                             <div className="app-role-line">Category: <span>{p.category}</span> • Role: <strong>{p.openRole}</strong></div>
@@ -1029,7 +999,7 @@ export default function App() {
                   handleLogout();
                 }}
               >
-                <span>🚪</span> Logout from DevCollab
+                Log out of DevCollab
               </button>
             </div>
           </div>
@@ -1042,8 +1012,7 @@ export default function App() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title-wrap">
-                <span className="modal-icon">✨</span>
-                <h3>Post New Project Task</h3>
+                <h3>Post New Project</h3>
               </div>
               <button className="modal-close" onClick={() => setIsPostModalOpen(false)}>✕</button>
             </div>
@@ -1106,8 +1075,8 @@ export default function App() {
                 <button type="button" className="btn btn-secondary" onClick={() => setIsPostModalOpen(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-emerald-primary">
-                  Publish to Marketplace (POST)
+                <button type="submit" className="btn btn-action-primary">
+                  Publish Project
                 </button>
               </div>
             </form>
@@ -1121,7 +1090,6 @@ export default function App() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title-wrap">
-                <span className="modal-icon">🎯</span>
                 <h3>Apply for {selectedProject.title}</h3>
               </div>
               <button className="modal-close" onClick={() => setIsApplyModalOpen(false)}>✕</button>
@@ -1158,8 +1126,8 @@ export default function App() {
                 <button type="button" className="btn btn-secondary" onClick={() => setIsApplyModalOpen(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-emerald-primary">
-                  Submit Application (POST)
+                <button type="submit" className="btn btn-action-primary">
+                  Submit Application
                 </button>
               </div>
             </form>
