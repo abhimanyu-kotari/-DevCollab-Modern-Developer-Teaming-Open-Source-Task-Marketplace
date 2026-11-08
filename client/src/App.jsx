@@ -622,41 +622,29 @@ export default function App() {
 
       {/* Main Container */}
       <main className="content-container">
-        {/* Designer Hero Section */}
-        <section className="dashboard-hero">
-          <h1 className="hero-heading">
-            Where developers team up <br />
-            and ship open-source.
-          </h1>
+        {/* Unified Panoramic Hero Showcase with B&W Team Photo & Crisp Scrim */}
+        <section className="hero-panoramic-showcase">
+          <div className="hero-showcase-bg">
+            <img
+              src="/images/team-collaboration.jpg"
+              alt="DevCollab Engineering Team Collaboration"
+              className="hero-showcase-img"
+            />
+            <div className="hero-showcase-scrim"></div>
+          </div>
 
-          <p className="hero-subtext">
-            Discover active engineering projects, claim specialized roles, and build verified collaborative software backed by real-time MongoDB tracking.
-          </p>
-
-          {/* Homepage Hero Team Collaboration Visual */}
-          <div className="hero-team-banner">
-            <div className="hero-team-frame">
-              <img
-                src="/images/team-collaboration.jpg"
-                alt="DevCollab Engineering Team Collaboration"
-                className="hero-team-img"
-              />
-              <div className="hero-team-caption-bar">
-                <div className="hero-team-caption-left">
-                  <span className="hero-live-dot"></span>
-                  <strong>Active Engineering Teams</strong>
-                  <span className="hero-caption-sep">•</span>
-                  <span>Peer collaboration on real repositories</span>
-                </div>
-                <button
-                  type="button"
-                  className="hero-team-post-btn"
-                  onClick={() => setIsPostModalOpen(true)}
-                >
-                  + Post Project
-                </button>
-              </div>
+          <div className="hero-showcase-content">
+            <div className="hero-indicator">
+              <span className="hero-live-dot"></span>
+              <span>Peer Engineering Teams</span>
             </div>
+            <h1 className="hero-heading">
+              Where developers team up <br />
+              and ship open-source.
+            </h1>
+            <p className="hero-subtext">
+              Discover active engineering projects, claim specialized roles, and build verified collaborative software backed by real-time MongoDB tracking.
+            </p>
           </div>
         </section>
 
