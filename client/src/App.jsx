@@ -588,7 +588,6 @@ export default function App() {
             </div>
             <div className="brand-title-wrap">
               <span className="brand-title">DevCollab</span>
-              <span className="badge-pill">v2.0</span>
             </div>
           </div>
 
@@ -625,13 +624,6 @@ export default function App() {
       <main className="content-container">
         {/* Designer Hero Section */}
         <section className="dashboard-hero">
-          <div className="hero-announcement">
-            <span className="pulse-dot"></span>
-            <span>Live Developer Network</span>
-            <span className="announcement-divider">/</span>
-            <span className="announcement-tag">MERN Stack</span>
-          </div>
-
           <h1 className="hero-heading">
             Where developers team up <br />
             and ship open-source.
@@ -855,31 +847,6 @@ export default function App() {
                   <span className="stat-name">Projects</span>
                 </div>
               </div>
-            </div>
-
-            {/* Profile Navigation Tabs */}
-            <div className="profile-tabs-nav">
-              <button
-                type="button"
-                className={`profile-tab-item ${profileActiveTab === 'received' ? 'active' : ''}`}
-                onClick={() => setProfileActiveTab('received')}
-              >
-                Inquiries ({receivedApplications.length})
-              </button>
-              <button
-                type="button"
-                className={`profile-tab-item ${profileActiveTab === 'sent' ? 'active' : ''}`}
-                onClick={() => setProfileActiveTab('sent')}
-              >
-                My Applications ({myApplications.length})
-              </button>
-              <button
-                type="button"
-                className={`profile-tab-item ${profileActiveTab === 'projects' ? 'active' : ''}`}
-                onClick={() => setProfileActiveTab('projects')}
-              >
-                My Projects ({myOwnProjects.length})
-              </button>
             </div>
 
             {/* Tab Body */}
@@ -1237,11 +1204,10 @@ export default function App() {
         </div>
       )}
 
-      {/* Clean Modern Footer (Without RV University text) */}
+      {/* Clean Modern Footer */}
       <footer className="footer">
         <div className="footer-content">
           <p><strong>DevCollab</strong> • Modern Developer Teaming & Open Source Task Marketplace</p>
-          <p className="footer-sub">MongoDB Atlas Cloud • Express REST API • React 18 SPA • Node.js Engine</p>
         </div>
       </footer>
     </div>

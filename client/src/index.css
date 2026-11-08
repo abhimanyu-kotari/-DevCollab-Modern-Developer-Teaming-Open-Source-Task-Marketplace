@@ -1007,10 +1007,15 @@ body::before {
   transition: all 0.15s ease;
 }
 
-.profile-stat-box:hover,
-.profile-stat-box.active {
+.profile-stat-box:hover {
   border-color: rgba(255, 255, 255, 0.2);
   background: var(--surface-hover);
+}
+
+.profile-stat-box.active {
+  border-color: rgba(99, 102, 241, 0.6);
+  background: rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
 }
 
 .profile-stat-box .stat-count {
@@ -1028,35 +1033,8 @@ body::before {
   text-transform: uppercase;
 }
 
-.profile-tabs-nav {
-  display: flex;
-  background: var(--surface-alt);
-  border-bottom: 1px solid var(--border);
-  padding: 3px;
-}
-
-.profile-tab-item {
-  flex: 1;
-  padding: 8px 6px;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  border-radius: var(--radius-xs);
-  transition: all 0.15s ease;
-  text-align: center;
-}
-
-.profile-tab-item:hover {
-  color: #ffffff;
-}
-
-.profile-tab-item.active {
-  background: var(--surface);
-  color: #ffffff;
-  font-weight: 600;
+.profile-stat-box.active .stat-name {
+  color: #a5b4fc;
 }
 
 .profile-drawer-body {
