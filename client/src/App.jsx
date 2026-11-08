@@ -45,9 +45,25 @@ const DEFAULT_PROJECTS = [
 ];
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState('login'); // 'login' or 'main'
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('devcollab_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [currentScreen, setCurrentScreen] = useState(() => {
+    try {
+      const saved = localStorage.getItem('devcollab_user');
+      return saved ? 'main' : 'login';
+    } catch {
+      return 'login';
+    }
+  });
+
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
-  const [currentUser, setCurrentUser] = useState(null);
   const [apiConnected, setApiConnected] = useState(false);
 
   // Auth Inputs
@@ -163,6 +179,7 @@ export default function App() {
           role: role
         };
         localStorage.setItem('devcollab_user', JSON.stringify(fallbackUser));
+        localStorage.setItem('devcollab_token', 'offline_token_' + Date.now());
         setCurrentUser(fallbackUser);
         setApiConnected(false);
         setCurrentScreen('main');
@@ -180,6 +197,8 @@ export default function App() {
       email: "guest@rvu.edu.in",
       role: "Student Developer"
     };
+    localStorage.setItem('devcollab_user', JSON.stringify(guestUser));
+    localStorage.setItem('devcollab_token', 'guest_token_' + Date.now());
     setCurrentUser(guestUser);
     setCurrentScreen('main');
   };
