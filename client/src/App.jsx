@@ -16,7 +16,7 @@ const DEFAULT_PROJECTS = [
     _id: 'proj_2',
     title: "Campus Event Booking System",
     category: "Web Development",
-    description: "Portal for college clubs to book auditorium halls and manage student registrations with calendar scheduling.",
+    description: "Portal for university clubs to book auditorium halls and manage student registrations with calendar scheduling.",
     skillsRequired: ["React", "Express.js", "CSS", "PostgreSQL"],
     openRole: "Backend Developer",
     ownerName: "Dhanush V",
@@ -26,7 +26,7 @@ const DEFAULT_PROJECTS = [
     _id: 'proj_3',
     title: "Student Expense Tracker",
     category: "MERN Stack",
-    description: "A clean budget management app for roommates to split hostel groceries, utilities, and daily room expenses.",
+    description: "A clean budget management app for college roommates to split hostel groceries, utilities, and daily room expenses.",
     skillsRequired: ["JavaScript", "React", "Node.js", "Chart.js"],
     openRole: "UI/UX Designer",
     ownerName: "Aniketh",
@@ -101,11 +101,18 @@ export default function App() {
   const [isAppsModalOpen, setIsAppsModalOpen] = useState(false);
   const [myApplications, setMyApplications] = useState([]);
 
-  // Fetch projects from REST API
+  // Fetch projects from REST API with default fallback
   const fetchProjects = useCallback(async () => {
     try {
       const data = await projectsAPI.getAll(searchTerm, selectedCategory);
-      if (data && data.projects) {
+      if (data && data.projects && data.projects.length > 0) {
+        setProjects(data.projects);
+        setApiConnected(true);
+      } else if (data && data.projects && data.projects.length === 0 && !searchTerm && selectedCategory === 'All') {
+        // Fallback to default sample projects if database was just created
+        setProjects(DEFAULT_PROJECTS);
+        setApiConnected(true);
+      } else if (data && data.projects) {
         setProjects(data.projects);
         setApiConnected(true);
       }
@@ -140,12 +147,9 @@ export default function App() {
     if (currentScreen === 'main') {
       syncAll();
 
-      // Sync immediately when window/tab is focused
       const handleFocus = () => syncAll();
       window.addEventListener('focus', handleFocus);
-
-      // Background heartbeat every 8 seconds to keep tabs synchronized
-      const timer = setInterval(syncAll, 8000);
+      const timer = setInterval(syncAll, 6000);
 
       return () => {
         window.removeEventListener('focus', handleFocus);
@@ -184,7 +188,6 @@ export default function App() {
         fetchMyApplications(res.user.email);
       }
     } catch (err) {
-      // Fallback in-memory authentication if backend is unreachable
       if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
         const fallbackName = name.trim() || email.split('@')[0];
         const formatted = fallbackName.charAt(0).toUpperCase() + fallbackName.slice(1);
@@ -281,7 +284,6 @@ export default function App() {
     }
 
     setProjects(prev => prev.filter(p => (p._id || p.id) !== id));
-    alert(`Project "${title}" was deleted.`);
   };
 
   // Check if current user already applied to this project
@@ -343,7 +345,6 @@ export default function App() {
     setIsApplyModalOpen(false);
     alert(`Application submitted for "${applyRole}" on "${selectedProject.title}"!`);
 
-    // Sync from server
     if (currentUser?.email) {
       fetchMyApplications(currentUser.email);
     }
@@ -374,12 +375,16 @@ export default function App() {
     return (
       <div className="login-container">
         <div className="login-card">
-          <div className="brand-badge">DevCollab Platform • Phase 2</div>
-          <div className="brand-logo-title">
-            <span className="logo-icon">⚡</span>
-            <h2><span>Dev</span>Collab</h2>
+          <div className="brand-badge-pill">
+            <span className="badge-sparkle">✨</span>
+            <span>RV University • CS3301 Full Stack</span>
           </div>
-          <p className="subtitle">Developer Teaming & Open Task Marketplace</p>
+
+          <div className="brand-hero-logo">
+            <div className="brand-icon-box">⚡</div>
+            <h2>Dev<span className="accent-text">Collab</span></h2>
+          </div>
+          <p className="subtitle">The Modern Developer Teaming & Open Task Marketplace</p>
 
           <div className="auth-tab-switch">
             <button
@@ -400,7 +405,7 @@ export default function App() {
 
           {authError && <div className="auth-error-banner">{authError}</div>}
 
-          <form onSubmit={handleAuthSubmit}>
+          <form onSubmit={handleAuthSubmit} className="auth-form">
             {authMode === 'signup' && (
               <div className="form-group">
                 <label>Full Name *</label>
@@ -438,7 +443,7 @@ export default function App() {
             </div>
 
             <div className="form-group">
-              <label>Primary Role</label>
+              <label>Primary Skill Role</label>
               <select value={role} onChange={(e) => setRole(e.target.value)}>
                 <option value="Frontend Developer">Frontend Developer (React / UI)</option>
                 <option value="Backend Developer">Backend Developer (Node / Express)</option>
@@ -460,8 +465,8 @@ export default function App() {
               </div>
             )}
 
-            <button type="submit" className="btn btn-primary btn-block" disabled={authLoading}>
-              {authLoading ? 'Verifying...' : (authMode === 'login' ? 'Sign In with JWT' : 'Register Account')}
+            <button type="submit" className="btn btn-gradient-primary btn-block" disabled={authLoading}>
+              {authLoading ? 'Verifying...' : (authMode === 'login' ? 'Sign In with JWT →' : 'Register Account →')}
             </button>
           </form>
 
@@ -472,7 +477,7 @@ export default function App() {
           </div>
 
           <div className="login-footer-info">
-            <span>Module 4 Security: Bcrypt Password Hashing + Signed JWT Tokens</span>
+            <span>🛡️ Secured with Bcrypt Salt Hashing & Cryptographic JWT Tokens</span>
           </div>
         </div>
       </div>
@@ -484,24 +489,46 @@ export default function App() {
   // =========================================================================
   return (
     <div className="main-wrapper">
-      {/* Top Navbar */}
+      {/* Top Glassmorphic Navbar */}
       <header className="navbar">
         <div className="nav-container">
+          {/* Left: Brand Logo */}
           <div className="nav-brand">
-            <span className="brand-logo-emoji">⚡</span>
-            <h2><span>Dev</span>Collab</h2>
-            <span className="badge-phase">Phase-2 Live</span>
+            <div className="brand-icon-box">⚡</div>
+            <div className="brand-title-wrap">
+              <h2>Dev<span className="accent-text">Collab</span></h2>
+              <span className="badge-pill">v2.0 Live</span>
+            </div>
           </div>
 
+          {/* Right: Status, Controls, User Card, Logout */}
           <div className="nav-right">
-            <div className="api-status-pill" title={apiConnected ? "Connected to Express & MongoDB" : "Operating with local fallback"}>
-              <span className={`status-dot ${apiConnected ? 'online' : 'offline'}`}></span>
-              {apiConnected ? 'API Live (Node + MongoDB)' : 'In-Memory State'}
+            {/* Live API Status Pill */}
+            <div className="status-badge-container" title={apiConnected ? "Connected to Express & MongoDB Atlas" : "Operating in fallback mode"}>
+              <span className={`status-beacon ${apiConnected ? 'online' : 'offline'}`}></span>
+              <span className="status-text">{apiConnected ? 'Node + MongoDB Atlas' : 'In-Memory Mode'}</span>
             </div>
 
+            <div className="nav-divider"></div>
+
+            {/* My Applications Button */}
+            <button className="btn btn-secondary btn-sm nav-btn" onClick={openApplicationsModal}>
+              <span className="btn-icon">📋</span>
+              My Applications
+              <span className="counter-pill">{myApplications.length}</span>
+            </button>
+
+            {/* Post Project Button */}
+            <button className="btn btn-gradient-primary btn-sm" onClick={() => setIsPostModalOpen(true)}>
+              <span className="btn-icon">✨</span> + Post Project
+            </button>
+
+            <div className="nav-divider"></div>
+
+            {/* User Profile Pill */}
             {currentUser && (
               <div className="user-profile-badge">
-                <div className="avatar-circle">
+                <div className="avatar-gradient">
                   {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                 </div>
                 <div className="user-badge-info">
@@ -511,15 +538,8 @@ export default function App() {
               </div>
             )}
 
-            <button className="btn btn-secondary btn-sm" onClick={openApplicationsModal}>
-              My Applications <span className="counter-pill">{myApplications.length}</span>
-            </button>
-
-            <button className="btn btn-primary btn-sm" onClick={() => setIsPostModalOpen(true)}>
-              + Post Project
-            </button>
-
-            <button className="btn btn-outline btn-sm logout-btn" onClick={handleLogout}>
+            {/* Logout Button */}
+            <button className="btn btn-ghost-logout btn-sm" onClick={handleLogout} title="Log out of session">
               Logout
             </button>
           </div>
@@ -528,11 +548,40 @@ export default function App() {
 
       {/* Main Container */}
       <main className="content-container">
-        {/* Banner Section */}
+        {/* Hero Section */}
         <section className="dashboard-hero">
-          <div className="hero-content">
-            <h1>Find Teammates & Open-Source Tasks</h1>
-            <p>Collaborate on real-world full-stack MERN projects, claim open roles, and build your engineering team portfolio.</p>
+          <div className="hero-announcement">
+            <span className="announcement-sparkle">🚀</span>
+            <span>Developer Teaming & Open Task Marketplace</span>
+            <span className="announcement-tag">MERN Architecture</span>
+          </div>
+
+          <h1 className="hero-heading">
+            Find Teammates. Build Projects. <br />
+            <span className="hero-gradient-text">Ship Real Engineering.</span>
+          </h1>
+
+          <p className="hero-subtext">
+            Connect with peer developers across RV University, claim open roles, and build high-velocity engineering teams backed by live MongoDB tracking.
+          </p>
+
+          <div className="hero-stats-row">
+            <div className="stat-card">
+              <span className="stat-number">{projects.length}+</span>
+              <span className="stat-label">Verified Projects</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-number">100%</span>
+              <span className="stat-label">REST API CRUD</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-number">JWT</span>
+              <span className="stat-label">Bcrypt Security</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-number">Atlas</span>
+              <span className="stat-label">Cloud Database</span>
+            </div>
           </div>
         </section>
 
@@ -552,14 +601,20 @@ export default function App() {
           </div>
 
           <div className="category-chips">
-            {['All', 'Full Stack', 'Web Development', 'MERN Stack', 'AI / ML'].map((cat) => (
+            {[
+              { id: 'All', label: '🌟 All Projects' },
+              { id: 'Full Stack', label: '💻 Full Stack' },
+              { id: 'Web Development', label: '🌐 Web Development' },
+              { id: 'MERN Stack', label: '⚡ MERN Stack' },
+              { id: 'AI / ML', label: '🤖 AI / ML' }
+            ].map((cat) => (
               <button
-                key={cat}
+                key={cat.id}
                 type="button"
-                className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(cat)}
+                className={`category-chip ${selectedCategory === cat.id ? 'active' : ''}`}
+                onClick={() => setSelectedCategory(cat.id)}
               >
-                {cat}
+                {cat.label}
               </button>
             ))}
           </div>
@@ -568,7 +623,10 @@ export default function App() {
         {/* Project Cards Grid */}
         <section className="projects-grid">
           {projectsLoading ? (
-            <div className="empty-state">Loading marketplace projects...</div>
+            <div className="empty-state">
+              <div className="loading-spinner"></div>
+              <p>Loading marketplace projects from MongoDB Atlas...</p>
+            </div>
           ) : filteredProjects.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">📂</div>
@@ -584,14 +642,17 @@ export default function App() {
                 <article key={projId} className="project-card">
                   <div className="card-header">
                     <span className="category-tag">{p.category || 'General'}</span>
-                    <span className="status-indicator">● {p.status || 'Open'}</span>
+                    <span className="status-indicator">
+                      <span className="status-dot-pulse"></span>
+                      {p.status || 'Open'}
+                    </span>
                   </div>
 
                   <h3 className="project-title">{p.title}</h3>
                   <p className="project-desc">{p.description}</p>
 
                   <div className="tech-section">
-                    <span className="section-label">Required Skills:</span>
+                    <span className="section-label">Required Tech Stack:</span>
                     <div className="tech-tags">
                       {p.skillsRequired && p.skillsRequired.map((skill, i) => (
                         <span key={i} className="tech-pill">{skill}</span>
@@ -601,14 +662,15 @@ export default function App() {
 
                   <div className="role-callout">
                     <span className="role-callout-icon">🎯</span>
-                    <div>
-                      <strong>Open Role:</strong> {p.openRole}
+                    <div className="role-callout-text">
+                      <span className="role-callout-label">Open Position</span>
+                      <strong>{p.openRole}</strong>
                     </div>
                   </div>
 
                   <div className="card-footer">
                     <div className="owner-info">
-                      <span className="owner-label">Posted by</span>
+                      <span className="owner-label">Project Lead</span>
                       <span className="owner-name">{p.ownerName || 'Student'}</span>
                     </div>
 
@@ -617,7 +679,7 @@ export default function App() {
                       <button
                         type="button"
                         className="btn btn-delete-sm"
-                        title="Delete project"
+                        title="Delete this project post"
                         onClick={() => handleDeleteProject(projId, p.title)}
                       >
                         🗑️ Delete
@@ -630,7 +692,7 @@ export default function App() {
                         </button>
                       ) : (
                         <button className="btn btn-primary btn-sm" onClick={() => openApply(p)}>
-                          Apply Now
+                          Apply Now →
                         </button>
                       )}
                     </div>
@@ -647,7 +709,10 @@ export default function App() {
         <div className="modal-backdrop" onClick={() => setIsPostModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Post New Project Task</h3>
+              <div className="modal-title-wrap">
+                <span className="modal-icon">✨</span>
+                <h3>Post New Project Task</h3>
+              </div>
               <button className="modal-close" onClick={() => setIsPostModalOpen(false)}>✕</button>
             </div>
 
@@ -709,8 +774,8 @@ export default function App() {
                 <button type="button" className="btn btn-secondary" onClick={() => setIsPostModalOpen(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Publish Project (POST)
+                <button type="submit" className="btn btn-gradient-primary">
+                  Publish to Marketplace (POST)
                 </button>
               </div>
             </form>
@@ -723,14 +788,17 @@ export default function App() {
         <div className="modal-backdrop" onClick={() => setIsApplyModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Apply for {selectedProject.title}</h3>
+              <div className="modal-title-wrap">
+                <span className="modal-icon">🎯</span>
+                <h3>Apply for {selectedProject.title}</h3>
+              </div>
               <button className="modal-close" onClick={() => setIsApplyModalOpen(false)}>✕</button>
             </div>
 
             <form onSubmit={submitApplication}>
               <div className="apply-project-summary">
                 <p><strong>Project Lead:</strong> {selectedProject.ownerName}</p>
-                <p><strong>Applying as:</strong> {applyRole}</p>
+                <p><strong>Desired Role:</strong> {applyRole}</p>
               </div>
 
               <div className="form-group">
@@ -758,7 +826,7 @@ export default function App() {
                 <button type="button" className="btn btn-secondary" onClick={() => setIsApplyModalOpen(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="btn btn-gradient-primary">
                   Submit Application (POST)
                 </button>
               </div>
@@ -772,7 +840,10 @@ export default function App() {
         <div className="modal-backdrop" onClick={() => setIsAppsModalOpen(false)}>
           <div className="modal-content apps-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>My Submitted Applications</h3>
+              <div className="modal-title-wrap">
+                <span className="modal-icon">📋</span>
+                <h3>My Submitted Applications</h3>
+              </div>
               <button className="modal-close" onClick={() => setIsAppsModalOpen(false)}>✕</button>
             </div>
 
@@ -810,8 +881,10 @@ export default function App() {
 
       {/* Footer */}
       <footer className="footer">
-        <p>DevCollab Platform • RV University CS3301 Full Stack Development CIE-2 (Phase 2)</p>
-        <p className="footer-sub">MERN Stack Architecture: MongoDB Atlas + Express.js + React.js + Node.js</p>
+        <div className="footer-content">
+          <p><strong>DevCollab Platform</strong> • RV University CS3301 Full Stack Development CIE-2 (Phase 2)</p>
+          <p className="footer-sub">MERN Stack Architecture: MongoDB Atlas Cloud + Express.js REST API + React.js SPA + Node.js Engine</p>
+        </div>
       </footer>
     </div>
   );
