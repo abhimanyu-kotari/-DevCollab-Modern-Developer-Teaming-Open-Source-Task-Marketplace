@@ -3,9 +3,25 @@ import { authAPI, projectsAPI, applicationsAPI } from './services/api';
 
 const CATEGORY_COVERS = {
   'Full Stack': 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
-  'Web Development': 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
+  'Web Development': 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80',
   'MERN Stack': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
-  'AI / ML': 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80'
+  'AI / ML': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80',
+  'General': '/images/team-collaboration.jpg'
+};
+
+const PRESET_IMAGES = [
+  { label: '👥 Dev Team', url: '/images/team-collaboration.jpg' },
+  { label: '🤖 AI & ML', url: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80' },
+  { label: '🌐 Full Stack', url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80' },
+  { label: '📊 Finance App', url: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80' },
+  { label: '🛰️ Drone / ROS', url: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80' }
+];
+
+const getProjectImage = (p) => {
+  if (p && p.image && typeof p.image === 'string' && p.image.trim()) {
+    return p.image;
+  }
+  return (p && CATEGORY_COVERS[p.category]) || CATEGORY_COVERS['General'];
 };
 
 const DEFAULT_PROJECTS = [
@@ -29,7 +45,7 @@ const DEFAULT_PROJECTS = [
     openRole: "Backend Developer",
     ownerName: "Dhanush V",
     status: "Open",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80"
+    image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80"
   },
   {
     _id: 'proj_3',
@@ -101,6 +117,7 @@ export default function App() {
   const [newDesc, setNewDesc] = useState('');
   const [newRole, setNewRole] = useState('');
   const [newSkills, setNewSkills] = useState('');
+  const [newImage, setNewImage] = useState('');
 
   // Apply Modal
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
@@ -270,6 +287,8 @@ export default function App() {
       return;
     }
 
+    const finalImage = newImage.trim() || CATEGORY_COVERS[newCategory] || CATEGORY_COVERS['General'];
+
     const payload = {
       title: newTitle.trim(),
       category: newCategory,
@@ -277,7 +296,7 @@ export default function App() {
       openRole: newRole.trim(),
       skillsRequired: newSkills ? newSkills.split(',').map(s => s.trim()) : [],
       ownerName: currentUser?.name || "Student Developer",
-      image: CATEGORY_COVERS[newCategory] || CATEGORY_COVERS['Full Stack']
+      image: finalImage
     };
 
     try {
@@ -297,6 +316,7 @@ export default function App() {
     setNewDesc('');
     setNewRole('');
     setNewSkills('');
+    setNewImage('');
     setIsPostModalOpen(false);
     alert('Project successfully published to DevCollab!');
     fetchProjects();
@@ -620,6 +640,32 @@ export default function App() {
           <p className="hero-subtext">
             Discover active engineering projects, claim specialized roles, and build verified collaborative software backed by real-time MongoDB tracking.
           </p>
+
+          {/* Homepage Hero Team Collaboration Visual */}
+          <div className="hero-team-banner">
+            <div className="hero-team-frame">
+              <img
+                src="/images/team-collaboration.jpg"
+                alt="DevCollab Engineering Team Collaboration"
+                className="hero-team-img"
+              />
+              <div className="hero-team-caption-bar">
+                <div className="hero-team-caption-left">
+                  <span className="hero-live-dot"></span>
+                  <strong>Active Engineering Teams</strong>
+                  <span className="hero-caption-sep">•</span>
+                  <span>Peer collaboration on real repositories</span>
+                </div>
+                <button
+                  type="button"
+                  className="hero-team-post-btn"
+                  onClick={() => setIsPostModalOpen(true)}
+                >
+                  + Post Project
+                </button>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Search & Category Filter Controls */}
@@ -679,64 +725,79 @@ export default function App() {
 
               return (
                 <article key={projId} className="project-card">
-                  <div className="card-top-bar">
-                    <span className="category-pill">{p.category || 'General'}</span>
-                    <span className="status-pill">
-                      <span className="status-dot"></span>
-                      {p.status || 'Open'}
-                    </span>
-                  </div>
-
-                  <h3 className="project-title">{p.title}</h3>
-                  <p className="project-desc">{p.description}</p>
-
-                  <div className="role-callout">
-                    <span className="role-callout-label">Seeking</span>
-                    <strong className="role-callout-role">{p.openRole}</strong>
-                  </div>
-
-                  <div className="tech-section">
-                    <div className="tech-tags">
-                      {p.skillsRequired && p.skillsRequired.map((skill, i) => (
-                        <span key={i} className="tech-pill">{skill}</span>
-                      ))}
+                  {/* Project Cover Photo with Category & Status Overlay */}
+                  <div className="card-image-wrap">
+                    <img
+                      src={getProjectImage(p)}
+                      alt={p.title}
+                      className="card-project-image"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = CATEGORY_COVERS['General'];
+                      }}
+                    />
+                    <div className="card-image-overlay-tags">
+                      <span className="category-pill">{p.category || 'General'}</span>
+                      <span className="status-pill">
+                        <span className="status-dot"></span>
+                        {p.status || 'Open'}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="card-footer">
-                    <div className="owner-info">
-                      <div className="owner-avatar">
-                        {p.ownerName ? p.ownerName.charAt(0).toUpperCase() : 'D'}
-                      </div>
-                      <div className="owner-text-wrap">
-                        <span className="owner-label">Lead</span>
-                        <span className="owner-name">{p.ownerName || 'Developer'}</span>
+                  <div className="card-body">
+                    <h3 className="project-title">{p.title}</h3>
+                    <p className="project-desc">{p.description}</p>
+
+                    <div className="role-callout">
+                      <span className="role-callout-label">Seeking</span>
+                      <strong className="role-callout-role">{p.openRole}</strong>
+                    </div>
+
+                    <div className="tech-section">
+                      <div className="tech-tags">
+                        {p.skillsRequired && p.skillsRequired.map((skill, i) => (
+                          <span key={i} className="tech-pill">{skill}</span>
+                        ))}
                       </div>
                     </div>
 
-                    <div className="card-actions-group">
-                      {/* Delete Button (Only Owner) */}
-                      {canDeleteProject(p) && (
-                        <button
-                          type="button"
-                          className="btn btn-delete-sm"
-                          title="Delete this project post"
-                          onClick={() => handleDeleteProject(projId, p.title)}
-                        >
-                          Delete
-                        </button>
-                      )}
+                    <div className="card-footer">
+                      <div className="owner-info">
+                        <div className="owner-avatar">
+                          {p.ownerName ? p.ownerName.charAt(0).toUpperCase() : 'D'}
+                        </div>
+                        <div className="owner-text-wrap">
+                          <span className="owner-label">Lead</span>
+                          <span className="owner-name">{p.ownerName || 'Developer'}</span>
+                        </div>
+                      </div>
 
-                      {/* Apply Button */}
-                      {applied ? (
-                        <span className="pill-applied">
-                          Applied ✓
-                        </span>
-                      ) : (
-                        <button className="btn btn-apply-primary" onClick={() => openApply(p)}>
-                          Apply to Team →
-                        </button>
-                      )}
+                      <div className="card-actions-group">
+                        {/* Delete Button (Only Owner) */}
+                        {canDeleteProject(p) && (
+                          <button
+                            type="button"
+                            className="btn btn-delete-sm"
+                            title="Delete this project post"
+                            onClick={() => handleDeleteProject(projId, p.title)}
+                          >
+                            Delete
+                          </button>
+                        )}
+
+                        {/* Apply Button */}
+                        {applied ? (
+                          <span className="pill-applied">
+                            Applied ✓
+                          </span>
+                        ) : (
+                          <button className="btn btn-apply-primary" onClick={() => openApply(p)}>
+                            Apply to Team →
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </article>
@@ -943,7 +1004,21 @@ export default function App() {
                         return (
                           <div key={projId} className="app-card-item">
                             <div className="app-item-top">
-                              <strong>{p.title}</strong>
+                              <div className="drawer-proj-title-thumb">
+                                <img
+                                  src={getProjectImage(p)}
+                                  alt={p.title}
+                                  className="drawer-proj-thumb"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = CATEGORY_COVERS['General'];
+                                  }}
+                                />
+                                <div>
+                                  <strong>{p.title}</strong>
+                                  <div className="app-role-line">Category: <span>{p.category}</span> • Role: <strong>{p.openRole}</strong></div>
+                                </div>
+                              </div>
                               <button
                                 type="button"
                                 className="btn btn-delete-sm"
@@ -952,7 +1027,6 @@ export default function App() {
                                 Delete
                               </button>
                             </div>
-                            <div className="app-role-line">Category: <span>{p.category}</span> • Role: <strong>{p.openRole}</strong></div>
                             <p className="app-pitch-text">{p.description}</p>
                           </div>
                         );
@@ -1043,6 +1117,60 @@ export default function App() {
                   value={newSkills}
                   onChange={(e) => setNewSkills(e.target.value)}
                 />
+              </div>
+
+              {/* Project Cover Photo Section */}
+              <div className="form-group">
+                <label className="image-field-label">
+                  Project Cover Photo
+                  <span className="field-hint">(Select preset or paste URL)</span>
+                </label>
+                <input
+                  type="url"
+                  placeholder="Paste image URL (e.g. https://... or Unsplash link)"
+                  value={newImage}
+                  onChange={(e) => setNewImage(e.target.value)}
+                />
+
+                <div className="preset-images-strip">
+                  <span className="preset-label">Quick Presets:</span>
+                  <div className="preset-buttons-wrap">
+                    {PRESET_IMAGES.map((preset, idx) => (
+                      <button
+                        type="button"
+                        key={idx}
+                        className={`preset-btn ${newImage === preset.url ? 'active' : ''}`}
+                        onClick={() => setNewImage(preset.url)}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {newImage && (
+                  <div className="post-image-preview-box">
+                    <img
+                      src={newImage}
+                      alt="Project cover preview"
+                      className="post-preview-img"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/images/team-collaboration.jpg';
+                      }}
+                    />
+                    <div className="preview-caption">
+                      <span>✓ Cover Photo Selected</span>
+                      <button
+                        type="button"
+                        className="preview-clear-btn"
+                        onClick={() => setNewImage('')}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="modal-actions">

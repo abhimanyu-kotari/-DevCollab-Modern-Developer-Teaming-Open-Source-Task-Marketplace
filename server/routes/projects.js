@@ -198,6 +198,9 @@ router.post('/', optionalAuth, async (req, res) => {
       ? skillsRequired
       : (typeof skillsRequired === 'string' ? skillsRequired.split(',').map(s => s.trim()) : []);
 
+    const defaultImage = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80';
+    const finalImage = (image && typeof image === 'string' && image.trim()) ? image.trim() : defaultImage;
+
     if (mongoose.connection.readyState === 1) {
       const newProject = await Project.create({
         title: title.trim(),
@@ -208,7 +211,7 @@ router.post('/', optionalAuth, async (req, res) => {
         owner: ownerId,
         ownerName,
         status: 'Open',
-        image: image || ''
+        image: finalImage
       });
 
       return res.status(201).json({
@@ -226,7 +229,7 @@ router.post('/', optionalAuth, async (req, res) => {
         skillsRequired: parsedSkills,
         ownerName,
         status: 'Open',
-        image: image || '',
+        image: finalImage,
         createdAt: new Date().toISOString()
       };
       memoryProjects.unshift(newProject);
