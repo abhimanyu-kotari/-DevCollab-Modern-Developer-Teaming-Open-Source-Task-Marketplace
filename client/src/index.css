@@ -388,7 +388,7 @@ body::before {
 .hero-full-bleed-rectangle {
   position: relative;
   width: 100%;
-  min-height: 400px;
+  min-height: 480px;
   background: #08090b;
   border-bottom: 1px solid var(--border);
   overflow: hidden;
@@ -399,8 +399,11 @@ body::before {
 
 .hero-showcase-bg {
   position: absolute;
-  inset: 0;
-  width: 100%;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 58%;
+  max-width: 960px;
   height: 100%;
   pointer-events: none;
 }
@@ -409,9 +412,9 @@ body::before {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: right 30%;
+  object-position: center 10%;
   display: block;
-  filter: contrast(1.1) brightness(0.95);
+  filter: contrast(1.05) brightness(0.98);
 }
 
 .hero-showcase-scrim {
@@ -420,10 +423,9 @@ body::before {
   background: linear-gradient(
     90deg,
     #08090b 0%,
-    rgba(8, 9, 11, 0.98) 35%,
-    rgba(8, 9, 11, 0.85) 54%,
-    rgba(8, 9, 11, 0.3) 80%,
-    rgba(8, 9, 11, 0.45) 100%
+    rgba(8, 9, 11, 0.82) 8%,
+    rgba(8, 9, 11, 0.25) 20%,
+    transparent 36%
   );
 }
 
@@ -439,7 +441,7 @@ body::before {
 }
 
 .hero-showcase-content {
-  max-width: 600px;
+  max-width: 500px;
   padding: 56px 0;
   text-align: left;
 }
@@ -480,22 +482,32 @@ body::before {
   line-height: 1.6;
   margin: 0;
   text-align: left;
-  max-width: 500px;
+  max-width: 460px;
 }
 
 @media (max-width: 868px) {
   .hero-full-bleed-rectangle {
     min-height: auto;
+    flex-direction: column-reverse;
+  }
+  .hero-showcase-bg {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    height: 300px;
   }
   .hero-showcase-img {
-    object-position: center 20%;
-    opacity: 0.35;
+    object-position: center;
   }
   .hero-showcase-scrim {
-    background: linear-gradient(180deg, rgba(8, 9, 11, 0.85) 0%, rgba(8, 9, 11, 0.98) 100%);
+    background: linear-gradient(
+      180deg,
+      transparent 60%,
+      #08090b 100%
+    );
   }
   .hero-showcase-content {
-    padding: 36px 0;
+    padding: 32px 0 24px;
     max-width: 100%;
   }
   .hero-heading {
