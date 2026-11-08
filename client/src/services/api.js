@@ -105,5 +105,11 @@ export const applicationsAPI = {
   getMyApplications: async (email) => {
     const query = email ? `?email=${encodeURIComponent(email)}` : '';
     return safeFetch(`/applications/my${query}`);
+  },
+
+  withdraw: async (id) => {
+    return safeFetch(`/applications/${id}`, {
+      method: 'DELETE'
+    });
   }
 };

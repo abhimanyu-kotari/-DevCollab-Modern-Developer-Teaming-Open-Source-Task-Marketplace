@@ -299,18 +299,15 @@ router.delete('/:id', optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
-      const project = await Project.findByIdAndDelete(id);
-      if (!project) {
-        return res.status(404).json({ success: false, error: 'Project not found' });
+    if (mongoose.connection.readyState === 1) {
+      if (mongoose.Types.ObjectId.isValid(id)) {
+        await Project.findByIdAndDelete(id);
+      } else {
+        await Project.deleteOne({ _id: id });
       }
       return res.status(200).json({ success: true, message: 'Project deleted successfully' });
     } else {
-      const prevLength = memoryProjects.length;
-      memoryProjects = memoryProjects.filter(p => p._id !== id);
-      if (memoryProjects.length === prevLength) {
-        return res.status(404).json({ success: false, error: 'Project not found' });
-      }
+      memoryProjects = memoryProjects.filter(p => String(p._id) !== String(id));
       return res.status(200).json({ success: true, message: 'Project deleted successfully' });
     }
   } catch (error) {

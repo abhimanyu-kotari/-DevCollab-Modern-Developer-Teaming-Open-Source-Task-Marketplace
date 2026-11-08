@@ -286,6 +286,33 @@ export default function App() {
     setProjects(prev => prev.filter(p => (p._id || p.id) !== id));
   };
 
+  // Withdraw / Remove Application Handler
+  const handleWithdrawApplication = async (appId) => {
+    if (!window.confirm("Do you want to withdraw and remove this application?")) {
+      return;
+    }
+
+    try {
+      await applicationsAPI.withdraw(appId);
+    } catch (err) {
+      console.warn('Local withdraw fallback:', err.message);
+    }
+
+    setMyApplications(prev => prev.filter(a => (a._id || a.id) !== appId));
+    alert('Application withdrawn successfully.');
+  };
+
+  // Check authorization: Owner or Lead Admin can delete
+  const canDeleteProject = (p) => {
+    if (!currentUser) return false;
+    const isOwner = p.ownerName?.toLowerCase() === currentUser.name?.toLowerCase();
+    const isLeadOrAdmin =
+      currentUser.role === 'Full Stack Developer' ||
+      currentUser.name?.toLowerCase().includes('abhimanyu') ||
+      currentUser.email?.toLowerCase().includes('abhimanyu');
+    return isOwner || isLeadOrAdmin;
+  };
+
   // Check if current user already applied to this project
   const isAlreadyApplied = (projectId) => {
     return myApplications.some(app =>
@@ -675,15 +702,17 @@ export default function App() {
                     </div>
 
                     <div className="card-actions-group">
-                      {/* Delete Button */}
-                      <button
-                        type="button"
-                        className="btn btn-delete-sm"
-                        title="Delete this project post"
-                        onClick={() => handleDeleteProject(projId, p.title)}
-                      >
-                        🗑️ Delete
-                      </button>
+                      {/* Delete Button (Owner or Lead Admin) */}
+                      {canDeleteProject(p) && (
+                        <button
+                          type="button"
+                          className="btn btn-delete-sm"
+                          title="Delete this project post"
+                          onClick={() => handleDeleteProject(projId, p.title)}
+                        >
+                          🗑️ Delete
+                        </button>
+                      )}
 
                       {/* Apply Button */}
                       {applied ? (
@@ -859,9 +888,19 @@ export default function App() {
                   <div key={app._id || idx} className="app-card-item">
                     <div className="app-item-top">
                       <strong>{app.projectTitle || 'DevCollab Project'}</strong>
-                      <span className={`status-tag ${app.status?.toLowerCase() || 'pending'}`}>
-                        ● {app.status || 'Pending'}
-                      </span>
+                      <div className="app-status-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className={`status-tag ${app.status?.toLowerCase() || 'pending'}`}>
+                          ● {app.status || 'Pending'}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn btn-delete-sm"
+                          title="Withdraw application"
+                          onClick={() => handleWithdrawApplication(app._id || idx)}
+                        >
+                          Withdraw ✕
+                        </button>
+                      </div>
                     </div>
                     <div className="app-role-line">Applied for: <span>{app.roleApplied}</span></div>
                     <p className="app-pitch-text">"{app.pitch}"</p>

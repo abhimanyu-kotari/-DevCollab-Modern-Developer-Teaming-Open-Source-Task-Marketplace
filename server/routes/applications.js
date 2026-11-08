@@ -154,4 +154,22 @@ router.patch('/:id/status', async (req, res) => {
   }
 });
 
+// DELETE /api/applications/:id - Withdraw application
+router.delete('/:id', optionalAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      await Application.findByIdAndDelete(id);
+      return res.status(200).json({ success: true, message: 'Application withdrawn successfully' });
+    } else {
+      memoryApplications = memoryApplications.filter(a => String(a._id) !== String(id));
+      return res.status(200).json({ success: true, message: 'Application withdrawn successfully' });
+    }
+  } catch (error) {
+    console.error('Delete application error:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+});
+
 module.exports = router;
