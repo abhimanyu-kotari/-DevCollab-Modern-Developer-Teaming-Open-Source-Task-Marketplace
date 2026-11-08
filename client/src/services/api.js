@@ -12,10 +12,10 @@ const getAuthHeaders = () => {
   };
 };
 
-// Generic safe fetch with timeout
+// Generic safe fetch with timeout (25s to accommodate Render free-tier cold starts)
 async function safeFetch(endpoint, options = {}) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
   try {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
