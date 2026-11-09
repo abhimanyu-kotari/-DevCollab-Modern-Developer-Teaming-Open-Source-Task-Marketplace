@@ -10,7 +10,7 @@ let memoryApplications = [];
 // POST /api/applications - Submit an application
 router.post('/', optionalAuth, async (req, res) => {
   try {
-    const { projectId, projectTitle, roleApplied, pitch, applicantName, applicantEmail } = req.body;
+    const { projectId, projectTitle, projectOwnerName, projectOwnerEmail, roleApplied, pitch, applicantName, applicantEmail } = req.body;
 
     if (!projectId || !roleApplied || !pitch) {
       return res.status(400).json({
@@ -23,7 +23,7 @@ router.post('/', optionalAuth, async (req, res) => {
     const email = req.user ? req.user.email : (applicantEmail || 'student@rvu.edu.in');
     const applicantId = req.user ? req.user.id : null;
 
-    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(projectId)) {
+    if (mongoose.connection.readyState === 1) {
       // Prevent duplicate applications
       const existing = await Application.findOne({
         project: projectId,
@@ -39,6 +39,8 @@ router.post('/', optionalAuth, async (req, res) => {
       const application = await Application.create({
         project: projectId,
         projectTitle: projectTitle || 'DevCollab Project',
+        projectOwnerName: projectOwnerName || '',
+        projectOwnerEmail: projectOwnerEmail || '',
         applicant: applicantId,
         applicantName: name,
         applicantEmail: email.toLowerCase(),
@@ -67,6 +69,8 @@ router.post('/', optionalAuth, async (req, res) => {
         _id: 'app_' + Date.now(),
         project: projectId,
         projectTitle: projectTitle || 'DevCollab Project',
+        projectOwnerName: projectOwnerName || '',
+        projectOwnerEmail: projectOwnerEmail || '',
         applicantName: name,
         applicantEmail: email.toLowerCase(),
         roleApplied: roleApplied.trim(),
@@ -106,12 +110,21 @@ router.get('/received', optionalAuth, async (req, res) => {
       const userProjects = await Project.find({ ownerName: { $regex: new RegExp(regexPattern, 'i') } });
       const projectIds = userProjects.map(p => p._id);
 
-      const applications = await Application.find({ project: { $in: projectIds } }).sort({ createdAt: -1 });
+      const applications = await Application.find({
+        $or: [
+          { project: { $in: projectIds } },
+          { projectOwnerName: { $regex: new RegExp(regexPattern, 'i') } }
+        ]
+      }).sort({ createdAt: -1 });
+
       return res.status(200).json({ success: true, count: applications.length, applications });
     } else {
       const userProjects = await Project.find({ ownerName: { $regex: new RegExp(regexPattern, 'i') } }).catch(() => []);
       const projectIds = userProjects.map(p => String(p._id));
-      const received = memoryApplications.filter(a => projectIds.includes(String(a.project)));
+      const received = memoryApplications.filter(a =>
+        projectIds.includes(String(a.project)) ||
+        (a.projectOwnerName && new RegExp(regexPattern, 'i').test(a.projectOwnerName))
+      );
       return res.status(200).json({ success: true, count: received.length, applications: received });
     }
   } catch (error) {

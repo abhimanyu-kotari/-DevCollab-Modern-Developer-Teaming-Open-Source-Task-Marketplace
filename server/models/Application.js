@@ -3,17 +3,23 @@ const mongoose = require('mongoose');
 const ApplicationSchema = new mongoose.Schema(
   {
     project: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Project',
+      type: mongoose.Schema.Types.Mixed,
       required: true
     },
     projectTitle: {
       type: String,
       required: true
     },
+    projectOwnerName: {
+      type: String,
+      default: ''
+    },
+    projectOwnerEmail: {
+      type: String,
+      default: ''
+    },
     applicant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      type: mongoose.Schema.Types.Mixed,
       required: false
     },
     applicantName: {

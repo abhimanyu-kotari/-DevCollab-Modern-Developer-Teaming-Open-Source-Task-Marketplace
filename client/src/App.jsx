@@ -72,51 +72,42 @@ const DEFAULT_PROJECTS = [
 ];
 
 // Helper to resolve clean display names from email or username
+// Uses EXACT email matching — only known team emails get mapped to full names
+// All other accounts get a humanized version of their email prefix
 const resolveUserName = (rawName, email) => {
   const cleanEmail = (email || '').toLowerCase().trim();
   const cleanName = (rawName || '').trim();
 
-  // If email or name belongs to Abhimanyu Kotari
-  if (
-    cleanEmail === 'abhimanyukotaribsc24@rvu.edu.in' ||
-    cleanEmail === 'abhimanyu@rvu.edu.in' ||
-    cleanEmail.startsWith('abhimanyu') ||
-    cleanName.toLowerCase().startsWith('abhimanyu') ||
-    cleanName.toLowerCase() === 'abhimanyukotaribsc24'
-  ) {
-    return 'Abhimanyu Kotari';
+  // ── EXACT EMAIL → FULL NAME MAPPING ──────────────────────────
+  // Only these specific emails get mapped. No fuzzy/startsWith matching.
+  const EXACT_EMAIL_MAP = {
+    'abhimanyukotaribsc24@rvu.edu.in': 'Abhimanyu Kotari',
+    'abhimanyu@rvu.edu.in': 'Abhimanyu Kotari',
+    'dhanushvbsc24@rvu.edu.in': 'Dhanush V',
+    'kharviani2@gmail.com': 'Aniketh',
+  };
+
+  if (EXACT_EMAIL_MAP[cleanEmail]) {
+    return EXACT_EMAIL_MAP[cleanEmail];
   }
 
-  // Dhanush
-  if (
-    cleanEmail.startsWith('dhanush') ||
-    cleanName.toLowerCase().startsWith('dhanush')
-  ) {
-    return 'Dhanush V';
-  }
-
-  // Aniketh
-  if (
-    cleanEmail.startsWith('aniketh') ||
-    cleanEmail.includes('kharviani') ||
-    cleanName.toLowerCase().startsWith('aniketh')
-  ) {
-    return 'Aniketh';
-  }
-
-  if (cleanName && cleanName.toLowerCase() !== cleanEmail.split('@')[0]?.toLowerCase()) {
-    return cleanName;
-  }
-
-  // Humanize username from email prefix
+  // ── HUMANIZE FROM EMAIL PREFIX ───────────────────────────────
+  // For ALL other accounts (including abhimanyukotari4@gmail.com),
+  // always derive the name fresh from the email prefix.
+  // This prevents stale/wrong names from persisting in localStorage.
   const prefix = cleanEmail.split('@')[0] || '';
   if (prefix) {
-    const cleaned = prefix.replace(/bsc\d+/gi, '').replace(/\d+/g, '').replace(/[._-]/g, ' ').trim();
+    const cleaned = prefix
+      .replace(/bsc\d+/gi, '')  // remove "bsc24" etc
+      .replace(/\d+/g, '')      // remove trailing numbers
+      .replace(/[._-]/g, ' ')   // dots/dashes → spaces
+      .trim();
     if (cleaned) {
       return cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
   }
 
+  // Last resort: use whatever name was given, or fallback
   return cleanName || 'Student Developer';
 };
 
@@ -140,6 +131,78 @@ const markProjectAsDeleted = (id) => {
     }
   } catch (e) {
     console.warn('Could not persist deletion to localStorage', e);
+  }
+};
+
+// Seed inquiries for demo / viva so Abhimanyu's projects always have an inquiry to show
+const DEFAULT_GLOBAL_APPLICATIONS = [
+  {
+    _id: 'app_seed_1',
+    projectId: 'proj_1',
+    projectTitle: 'AI Resume Matcher',
+    projectOwnerName: 'Abhimanyu Kotari',
+    projectOwnerEmail: 'abhimanyukotaribsc24@rvu.edu.in',
+    roleApplied: 'Frontend Developer',
+    pitch: 'Hi Abhimanyu, I have 2 years of React & Tailwind experience and would love to build the resume matcher UI with you!',
+    applicantName: 'Dhanush V',
+    applicantEmail: 'dhanushvbsc24@rvu.edu.in',
+    status: 'Pending',
+    createdAt: new Date(Date.now() - 3600000 * 2).toISOString()
+  }
+];
+
+// Persistent cross-account & cross-tab application storage
+const getStoredGlobalApplications = () => {
+  try {
+    const raw = localStorage.getItem('devcollab_global_applications');
+    if (!raw) {
+      localStorage.setItem('devcollab_global_applications', JSON.stringify(DEFAULT_GLOBAL_APPLICATIONS));
+      return DEFAULT_GLOBAL_APPLICATIONS;
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.setItem('devcollab_global_applications', JSON.stringify(DEFAULT_GLOBAL_APPLICATIONS));
+      return DEFAULT_GLOBAL_APPLICATIONS;
+    }
+    return parsed;
+  } catch {
+    return DEFAULT_GLOBAL_APPLICATIONS;
+  }
+};
+
+const saveGlobalApplication = (app) => {
+  try {
+    const existing = getStoredGlobalApplications();
+    const filtered = existing.filter(a => String(a._id || a.id) !== String(app._id || app.id));
+    const updated = [app, ...filtered];
+    localStorage.setItem('devcollab_global_applications', JSON.stringify(updated));
+    window.dispatchEvent(new Event('devcollab_storage_update'));
+  } catch (e) {
+    console.warn('Could not save application to localStorage', e);
+  }
+};
+
+const updateGlobalApplicationStatus = (appId, newStatus) => {
+  try {
+    const existing = getStoredGlobalApplications();
+    const updated = existing.map(a =>
+      String(a._id || a.id) === String(appId) ? { ...a, status: newStatus } : a
+    );
+    localStorage.setItem('devcollab_global_applications', JSON.stringify(updated));
+    window.dispatchEvent(new Event('devcollab_storage_update'));
+  } catch (e) {
+    console.warn('Could not update application status in localStorage', e);
+  }
+};
+
+const removeGlobalApplication = (appId) => {
+  try {
+    const existing = getStoredGlobalApplications();
+    const updated = existing.filter(a => String(a._id || a.id) !== String(appId));
+    localStorage.setItem('devcollab_global_applications', JSON.stringify(updated));
+    window.dispatchEvent(new Event('devcollab_storage_update'));
+  } catch (e) {
+    console.warn('Could not remove application from localStorage', e);
   }
 };
 
@@ -241,31 +304,65 @@ export default function App() {
     }
   }, [searchTerm, selectedCategory]);
 
-  // Fetch submitted applications for current user
+  // Fetch submitted applications for current user (API + localStorage fallback)
   const fetchMyApplications = useCallback(async (userEmail) => {
     if (!userEmail) return;
+    const cleanEmail = userEmail.toLowerCase().trim();
+
     try {
       const res = await applicationsAPI.getMyApplications(userEmail);
-      if (res && res.applications) {
+      if (res && res.applications && res.applications.length > 0) {
         setMyApplications(res.applications);
+        return;
       }
     } catch (err) {
-      // Keep existing state
+      // API unreachable — fall through to localStorage
     }
+
+    // Fallback: read from shared localStorage
+    const allApps = getStoredGlobalApplications();
+    const mine = allApps.filter(a => (a.applicantEmail || '').toLowerCase() === cleanEmail);
+    setMyApplications(mine);
   }, []);
 
-  // Fetch received applications on projects created by current user
+  // Fetch received applications on projects created by current user (API + localStorage fallback)
   const fetchReceivedApplications = useCallback(async (userName) => {
     if (!userName) return;
+
     try {
       const res = await applicationsAPI.getReceivedApplications(userName);
-      if (res && res.applications) {
+      if (res && res.applications && res.applications.length > 0) {
         setReceivedApplications(res.applications);
+        return;
       }
     } catch (err) {
-      // Keep existing state
+      // API unreachable — fall through to localStorage
     }
-  }, []);
+
+    // Fallback: read from shared localStorage
+    // Match applications where the project owner matches the current user
+    const allApps = getStoredGlobalApplications();
+    const cleanUserName = userName.toLowerCase().trim();
+    const received = allApps.filter(a => {
+      const appOwner = (a.projectOwnerName || '').toLowerCase().trim();
+      // Direct name match
+      if (appOwner && cleanUserName && (appOwner === cleanUserName || appOwner.includes(cleanUserName) || cleanUserName.includes(appOwner))) {
+        return true;
+      }
+      // Check if both are Abhimanyu variants
+      if (cleanUserName.includes('abhimanyu') && appOwner.includes('abhimanyu')) return true;
+      // Check project IDs owned by currentUser
+      const ownedProjIds = projects.filter(p => {
+        const pOwner = (p.ownerName || '').toLowerCase();
+        return pOwner === cleanUserName || pOwner.includes(cleanUserName) || cleanUserName.includes(pOwner);
+      }).map(p => String(p._id || p.id));
+      if (ownedProjIds.includes(String(a.projectId || a.project))) {
+        return true;
+      }
+      return false;
+    });
+    setReceivedApplications(received);
+  }, [projects]);
 
   // Sync entire app state
   const syncAll = useCallback(async () => {
@@ -285,10 +382,32 @@ export default function App() {
 
       const handleFocus = () => syncAll();
       window.addEventListener('focus', handleFocus);
+
+      // Cross-tab localStorage sync: when Account B writes an application,
+      // Account A's open tab picks it up immediately
+      const handleStorageChange = (e) => {
+        if (e.key === 'devcollab_global_applications' && currentUser) {
+          fetchMyApplications(currentUser.email);
+          fetchReceivedApplications(currentUser.name);
+        }
+      };
+      window.addEventListener('storage', handleStorageChange);
+
+      // Also listen for same-tab custom event
+      const handleCustomStorage = () => {
+        if (currentUser) {
+          fetchMyApplications(currentUser.email);
+          fetchReceivedApplications(currentUser.name);
+        }
+      };
+      window.addEventListener('devcollab_storage_update', handleCustomStorage);
+
       const timer = setInterval(syncAll, 6000);
 
       return () => {
         window.removeEventListener('focus', handleFocus);
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('devcollab_storage_update', handleCustomStorage);
         clearInterval(timer);
       };
     }
@@ -458,6 +577,7 @@ export default function App() {
     }
 
     setMyApplications(prev => prev.filter(a => (a._id || a.id) !== appId));
+    removeGlobalApplication(appId);
     alert('Application withdrawn.');
   };
 
@@ -472,6 +592,7 @@ export default function App() {
     setReceivedApplications(prev =>
       prev.map(a => ((a._id || a.id) === appId ? { ...a, status: newStatus } : a))
     );
+    updateGlobalApplicationStatus(appId, newStatus);
     alert(`Candidate marked as "${newStatus}".`);
   };
 
@@ -499,10 +620,11 @@ export default function App() {
       if (ownerName.includes(userName) || userName.includes(ownerName)) return true;
     }
 
-    // 4. Abhimanyu Kotari alias match (handles username, student ID or full name)
-    const isCurrentUserAbhimanyu = userEmail.includes('abhimanyu') || userName.includes('abhimanyu');
+    // 4. Abhimanyu Kotari alias match — ONLY the RVU student email owns "Abhimanyu Kotari" projects
+    const abhimanyuRvuEmails = ['abhimanyukotaribsc24@rvu.edu.in', 'abhimanyu@rvu.edu.in'];
+    const isCurrentUserAbhimanyuRvu = abhimanyuRvuEmails.includes(userEmail);
     const isProjectAbhimanyu = ownerName.includes('abhimanyu') || ownerEmail.includes('abhimanyu');
-    if (isCurrentUserAbhimanyu && isProjectAbhimanyu) {
+    if (isCurrentUserAbhimanyuRvu && isProjectAbhimanyu) {
       return true;
     }
 
@@ -527,8 +649,18 @@ export default function App() {
 
   // Check if current user already applied to this project
   const isAlreadyApplied = (projectId) => {
-    return myApplications.some(app =>
-      String(app.projectId || app.project) === String(projectId)
+    const strId = String(projectId);
+    const userEmail = (currentUser?.email || '').toLowerCase();
+    // Check in-memory state
+    const inState = myApplications.some(app =>
+      String(app.projectId || app.project) === strId
+    );
+    if (inState) return true;
+    // Also check localStorage (survives page refresh)
+    const stored = getStoredGlobalApplications();
+    return stored.some(app =>
+      String(app.projectId || app.project) === strId &&
+      (app.applicantEmail || '').toLowerCase() === userEmail
     );
   };
 
@@ -557,6 +689,8 @@ export default function App() {
     const appData = {
       projectId: projId,
       projectTitle: selectedProject.title,
+      projectOwnerName: selectedProject.ownerName || '',
+      projectOwnerEmail: selectedProject.ownerEmail || selectedProject.createdByEmail || '',
       roleApplied: applyRole,
       pitch: applyPitch.trim(),
       applicantName: currentUser?.name || "Student Applicant",
@@ -579,6 +713,9 @@ export default function App() {
       status: 'Pending',
       createdAt: new Date().toISOString()
     };
+
+    // Persist to shared localStorage so OTHER accounts (project owners) can see inquiries
+    saveGlobalApplication(newAppRecord);
 
     setMyApplications(prev => [newAppRecord, ...prev]);
     setIsApplyModalOpen(false);
