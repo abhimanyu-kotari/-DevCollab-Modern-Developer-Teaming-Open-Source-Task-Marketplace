@@ -18,6 +18,15 @@ let memoryUsers = [
     bio: 'Lead Developer at DevCollab'
   },
   {
+    _id: 'usr_1b',
+    name: 'Abhimanyu Kotari',
+    email: 'abhimanyukotaribsc24@rvu.edu.in',
+    passwordHash: bcrypt.hashSync('password123', 10),
+    role: 'Full Stack Developer',
+    skills: ['React', 'Node.js', 'MongoDB', 'Express'],
+    bio: 'Lead Developer at DevCollab'
+  },
+  {
     _id: 'usr_2',
     name: 'Dhanush V',
     email: 'dhanushvbsc24@rvu.edu.in',
@@ -180,8 +189,12 @@ router.post('/login', async (req, res) => {
         });
       }
 
+      const resolvedName = (user.name && user.name.toLowerCase() !== cleanEmail.split('@')[0])
+        ? user.name
+        : (cleanEmail.includes('abhimanyu') ? 'Abhimanyu Kotari' : user.name);
+
       const token = jwt.sign(
-        { id: user._id, email: user.email, name: user.name, role: user.role },
+        { id: user._id, email: user.email, name: resolvedName, role: user.role },
         JWT_SECRET,
         { expiresIn: '7d' }
       );
@@ -192,7 +205,7 @@ router.post('/login', async (req, res) => {
         token,
         user: {
           id: user._id,
-          name: user.name,
+          name: resolvedName,
           email: user.email,
           role: user.role,
           skills: user.skills,
@@ -217,8 +230,12 @@ router.post('/login', async (req, res) => {
         });
       }
 
+      const resolvedName = (user.name && user.name.toLowerCase() !== cleanEmail.split('@')[0])
+        ? user.name
+        : (cleanEmail.includes('abhimanyu') ? 'Abhimanyu Kotari' : user.name);
+
       const token = jwt.sign(
-        { id: user._id, email: user.email, name: user.name, role: user.role },
+        { id: user._id, email: user.email, name: resolvedName, role: user.role },
         JWT_SECRET,
         { expiresIn: '7d' }
       );
@@ -229,7 +246,7 @@ router.post('/login', async (req, res) => {
         token,
         user: {
           id: user._id,
-          name: user.name,
+          name: resolvedName,
           email: user.email,
           role: user.role,
           skills: user.skills,

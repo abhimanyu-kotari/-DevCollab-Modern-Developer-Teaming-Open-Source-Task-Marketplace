@@ -97,16 +97,19 @@ router.get('/received', optionalAuth, async (req, res) => {
       return res.status(200).json({ success: true, count: 0, applications: [] });
     }
 
+    const regexPattern = ownerName.toLowerCase().includes('abhimanyu')
+      ? 'abhimanyu'
+      : ownerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     if (mongoose.connection.readyState === 1) {
       // Find projects owned by this user
-      const userProjects = await Project.find({ ownerName: { $regex: new RegExp(`^${ownerName}$`, 'i') } });
+      const userProjects = await Project.find({ ownerName: { $regex: new RegExp(regexPattern, 'i') } });
       const projectIds = userProjects.map(p => p._id);
 
       const applications = await Application.find({ project: { $in: projectIds } }).sort({ createdAt: -1 });
       return res.status(200).json({ success: true, count: applications.length, applications });
     } else {
-      const ProjectModel = require('../models/Project');
-      const userProjects = await Project.find({ ownerName: { $regex: new RegExp(`^${ownerName}$`, 'i') } }).catch(() => []);
+      const userProjects = await Project.find({ ownerName: { $regex: new RegExp(regexPattern, 'i') } }).catch(() => []);
       const projectIds = userProjects.map(p => String(p._id));
       const received = memoryApplications.filter(a => projectIds.includes(String(a.project)));
       return res.status(200).json({ success: true, count: received.length, applications: received });

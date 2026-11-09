@@ -71,12 +71,94 @@ const DEFAULT_PROJECTS = [
   }
 ];
 
+// Helper to resolve clean display names from email or username
+const resolveUserName = (rawName, email) => {
+  const cleanEmail = (email || '').toLowerCase().trim();
+  const cleanName = (rawName || '').trim();
+
+  // If email or name belongs to Abhimanyu Kotari
+  if (
+    cleanEmail === 'abhimanyukotaribsc24@rvu.edu.in' ||
+    cleanEmail === 'abhimanyu@rvu.edu.in' ||
+    cleanEmail.startsWith('abhimanyu') ||
+    cleanName.toLowerCase().startsWith('abhimanyu') ||
+    cleanName.toLowerCase() === 'abhimanyukotaribsc24'
+  ) {
+    return 'Abhimanyu Kotari';
+  }
+
+  // Dhanush
+  if (
+    cleanEmail.startsWith('dhanush') ||
+    cleanName.toLowerCase().startsWith('dhanush')
+  ) {
+    return 'Dhanush V';
+  }
+
+  // Aniketh
+  if (
+    cleanEmail.startsWith('aniketh') ||
+    cleanEmail.includes('kharviani') ||
+    cleanName.toLowerCase().startsWith('aniketh')
+  ) {
+    return 'Aniketh';
+  }
+
+  if (cleanName && cleanName.toLowerCase() !== cleanEmail.split('@')[0]?.toLowerCase()) {
+    return cleanName;
+  }
+
+  // Humanize username from email prefix
+  const prefix = cleanEmail.split('@')[0] || '';
+  if (prefix) {
+    const cleaned = prefix.replace(/bsc\d+/gi, '').replace(/\d+/g, '').replace(/[._-]/g, ' ').trim();
+    if (cleaned) {
+      return cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+  }
+
+  return cleanName || 'Student Developer';
+};
+
+// Helper to track locally deleted project IDs across refreshes
+const getDeletedProjectIds = () => {
+  try {
+    const raw = localStorage.getItem('devcollab_deleted_projects');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const markProjectAsDeleted = (id) => {
+  try {
+    const existing = getDeletedProjectIds();
+    const strId = String(id);
+    if (!existing.includes(strId)) {
+      existing.push(strId);
+      localStorage.setItem('devcollab_deleted_projects', JSON.stringify(existing));
+    }
+  } catch (e) {
+    console.warn('Could not persist deletion to localStorage', e);
+  }
+};
+
 export default function App() {
-  // Synchronous session recovery from localStorage
+  // Synchronous session recovery from localStorage with automatic name self-healing
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('devcollab_user');
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const resolvedName = resolveUserName(parsed.name, parsed.email);
+        if (resolvedName !== parsed.name) {
+          const updated = { ...parsed, name: resolvedName };
+          localStorage.setItem('devcollab_user', JSON.stringify(updated));
+          return updated;
+        }
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -105,7 +187,10 @@ export default function App() {
   const [authError, setAuthError] = useState('');
 
   // Main Page State
-  const [projects, setProjects] = useState(DEFAULT_PROJECTS);
+  const [projects, setProjects] = useState(() => {
+    const deletedIds = getDeletedProjectIds();
+    return DEFAULT_PROJECTS.filter(p => !deletedIds.includes(String(p._id || p.id)));
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [projectsLoading, setProjectsLoading] = useState(false);
@@ -130,22 +215,28 @@ export default function App() {
   const [profileActiveTab, setProfileActiveTab] = useState('received'); // 'received', 'sent', 'projects'
   const [myApplications, setMyApplications] = useState([]); // Applications sent by user
   const [receivedApplications, setReceivedApplications] = useState([]); // Applications received on user's projects
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameVal, setEditNameVal] = useState('');
 
-  // Fetch projects from REST API with default fallback
+  // Fetch projects from REST API with default fallback and deleted filter
   const fetchProjects = useCallback(async () => {
+    const deletedIds = getDeletedProjectIds();
+    const filterDeleted = (list) => (list || []).filter(p => !deletedIds.includes(String(p._id || p.id)));
+
     try {
       const data = await projectsAPI.getAll(searchTerm, selectedCategory);
       if (data && data.projects && data.projects.length > 0) {
-        setProjects(data.projects);
+        setProjects(filterDeleted(data.projects));
         setApiConnected(true);
       } else if (data && data.projects && data.projects.length === 0 && !searchTerm && selectedCategory === 'All') {
-        setProjects(DEFAULT_PROJECTS);
+        setProjects(filterDeleted(DEFAULT_PROJECTS));
         setApiConnected(true);
       } else if (data && data.projects) {
-        setProjects(data.projects);
+        setProjects(filterDeleted(data.projects));
         setApiConnected(true);
       }
     } catch (err) {
+      setProjects(filterDeleted(DEFAULT_PROJECTS));
       setApiConnected(false);
     }
   }, [searchTerm, selectedCategory]);
@@ -203,6 +294,18 @@ export default function App() {
     }
   }, [currentScreen, syncAll]);
 
+  // Keep currentUser display name canonical
+  useEffect(() => {
+    if (currentUser?.email) {
+      const canonical = resolveUserName(currentUser.name, currentUser.email);
+      if (canonical && canonical !== currentUser.name) {
+        const updated = { ...currentUser, name: canonical };
+        setCurrentUser(updated);
+        localStorage.setItem('devcollab_user', JSON.stringify(updated));
+      }
+    }
+  }, [currentUser]);
+
   // Auth Handler: Login or Register
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
@@ -225,22 +328,23 @@ export default function App() {
       }
 
       if (res.token && res.user) {
+        const canonicalName = resolveUserName(res.user.name, res.user.email);
+        const resolvedUser = { ...res.user, name: canonicalName };
         localStorage.setItem('devcollab_token', res.token);
-        localStorage.setItem('devcollab_user', JSON.stringify(res.user));
-        setCurrentUser(res.user);
+        localStorage.setItem('devcollab_user', JSON.stringify(resolvedUser));
+        setCurrentUser(resolvedUser);
         setApiConnected(true);
         setCurrentScreen('main');
-        fetchMyApplications(res.user.email);
-        fetchReceivedApplications(res.user.name);
+        fetchMyApplications(resolvedUser.email);
+        fetchReceivedApplications(resolvedUser.name);
       }
     } catch (err) {
       if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
-        const fallbackName = name.trim() || email.split('@')[0];
-        const formatted = fallbackName.charAt(0).toUpperCase() + fallbackName.slice(1);
+        const finalName = resolveUserName(name, email);
         const fallbackUser = {
-          name: formatted,
+          name: finalName,
           email: email.toLowerCase(),
-          role: role
+          role: role || 'Student Developer'
         };
         localStorage.setItem('devcollab_user', JSON.stringify(fallbackUser));
         localStorage.setItem('devcollab_token', 'offline_token_' + Date.now());
@@ -328,13 +432,17 @@ export default function App() {
       return;
     }
 
+    // Persist deleted project ID in localStorage so fallback/refresh won't bring it back
+    markProjectAsDeleted(id);
+
     try {
       await projectsAPI.delete(id);
     } catch (err) {
-      console.warn('Local delete fallback:', err.message);
+      console.warn('API delete error, deleting locally:', err.message);
     }
 
-    setProjects(prev => prev.filter(p => (p._id || p.id) !== id));
+    setProjects(prev => prev.filter(p => String(p._id || p.id) !== String(id)));
+    alert(`Project "${title}" deleted successfully!`);
   };
 
   // Withdraw / Remove Application Handler
@@ -368,10 +476,54 @@ export default function App() {
   };
 
   // Check authorization: ONLY the project creator can delete their project
-  const canDeleteProject = (p) => {
-    if (!currentUser || !currentUser.name) return false;
-    return p.ownerName?.toLowerCase() === currentUser.name.toLowerCase();
-  };
+  const isProjectOwner = useCallback((p) => {
+    if (!currentUser) return false;
+    const userEmail = (currentUser.email || '').toLowerCase().trim();
+    const userName = (currentUser.name || '').toLowerCase().trim();
+    const ownerName = (p.ownerName || '').toLowerCase().trim();
+    const ownerEmail = (p.ownerEmail || p.createdByEmail || '').toLowerCase().trim();
+
+    // 1. Direct MongoDB ID match
+    if (p.owner && (p.owner === currentUser.id || p.owner === currentUser._id)) {
+      return true;
+    }
+
+    // 2. Direct email match
+    if (ownerEmail && userEmail && ownerEmail === userEmail) {
+      return true;
+    }
+
+    // 3. Name exact or contains match
+    if (ownerName && userName) {
+      if (ownerName === userName) return true;
+      if (ownerName.includes(userName) || userName.includes(ownerName)) return true;
+    }
+
+    // 4. Abhimanyu Kotari alias match (handles username, student ID or full name)
+    const isCurrentUserAbhimanyu = userEmail.includes('abhimanyu') || userName.includes('abhimanyu');
+    const isProjectAbhimanyu = ownerName.includes('abhimanyu') || ownerEmail.includes('abhimanyu');
+    if (isCurrentUserAbhimanyu && isProjectAbhimanyu) {
+      return true;
+    }
+
+    // 5. Dhanush alias match
+    const isCurrentUserDhanush = userEmail.includes('dhanush') || userName.includes('dhanush');
+    const isProjectDhanush = ownerName.includes('dhanush') || ownerEmail.includes('dhanush');
+    if (isCurrentUserDhanush && isProjectDhanush) {
+      return true;
+    }
+
+    // 6. Aniketh alias match
+    const isCurrentUserAniketh = userEmail.includes('aniketh') || userName.includes('aniketh') || userEmail.includes('kharviani');
+    const isProjectAniketh = ownerName.includes('aniketh') || ownerEmail.includes('aniketh');
+    if (isCurrentUserAniketh && isProjectAniketh) {
+      return true;
+    }
+
+    return false;
+  }, [currentUser]);
+
+  const canDeleteProject = (p) => isProjectOwner(p);
 
   // Check if current user already applied to this project
   const isAlreadyApplied = (projectId) => {
@@ -438,9 +590,7 @@ export default function App() {
   };
 
   // User's own projects
-  const myOwnProjects = projects.filter(p =>
-    p.ownerName?.toLowerCase() === currentUser?.name?.toLowerCase()
-  );
+  const myOwnProjects = projects.filter(p => isProjectOwner(p));
 
   // Real-time client-side filter
   const filteredProjects = projects.filter((p) => {
@@ -809,7 +959,87 @@ export default function App() {
                 </div>
                 <span className="avatar-online-dot"></span>
               </div>
-              <h4 className="profile-name">{currentUser?.name || 'Developer'}</h4>
+
+              {isEditingName ? (
+                <div style={{ margin: '6px 0 10px', display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                  <input
+                    type="text"
+                    value={editNameVal}
+                    onChange={(e) => setEditNameVal(e.target.value)}
+                    style={{
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      borderRadius: '6px',
+                      color: '#ffffff',
+                      padding: '4px 8px',
+                      fontSize: '14px',
+                      textAlign: 'center'
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editNameVal.trim()) {
+                        const updated = { ...currentUser, name: editNameVal.trim() };
+                        setCurrentUser(updated);
+                        localStorage.setItem('devcollab_user', JSON.stringify(updated));
+                      }
+                      setIsEditingName(false);
+                    }}
+                    style={{
+                      background: '#10b981',
+                      border: 'none',
+                      color: '#fff',
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingName(false)}
+                    style={{
+                      background: 'rgba(255,255,255,0.1)',
+                      border: 'none',
+                      color: '#cbd5e1',
+                      borderRadius: '6px',
+                      padding: '4px 8px',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '2px' }}>
+                  <h4 className="profile-name" style={{ margin: 0 }}>{currentUser?.name || 'Developer'}</h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditNameVal(currentUser?.name || '');
+                      setIsEditingName(true);
+                    }}
+                    title="Change name"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      padding: '2px 4px'
+                    }}
+                  >
+                    ✏️
+                  </button>
+                </div>
+              )}
+
               <span className="profile-badge">{currentUser?.role || 'Developer'}</span>
               <p className="profile-email">{currentUser?.email}</p>
 
